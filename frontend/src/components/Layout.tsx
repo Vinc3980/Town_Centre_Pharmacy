@@ -266,6 +266,26 @@ export default function Layout() {
     window.location.reload();
   };
 
+  const accountMenu = (close: () => void) => (
+    <div>
+      <div className="px-3 pt-2 pb-1.5 mb-1 border-b border-line">
+        <div className="text-sm font-medium text-navy truncate">{user?.name}</div>
+        <div className="text-[11px] text-gray-soft truncate">{user?.email}</div>
+      </div>
+      <button
+        type="button"
+        onClick={() => {
+          close();
+          setShowSignOut(true);
+        }}
+        className="flex items-center gap-2.5 w-full px-3 py-2 rounded-control text-sm text-red hover:bg-red-bg transition"
+      >
+        <LogOut size={15} />
+        Sign out
+      </button>
+    </div>
+  );
+
   const totalNavItems = NAV_SECTIONS.reduce(
     (acc, section) => acc + section.items.filter((i) => {
       if (!i.roles.includes(userRole)) return false;
@@ -448,14 +468,23 @@ export default function Layout() {
 
             <div className="w-px h-8 bg-line" />
 
-            {/* User Avatar */}
-            <div className="flex items-center gap-3">
-              <UserAvatar src={user?.profilePicture} name={user?.name ?? "U"} size="sm" />
-              <div className="text-right">
-                <div className="text-sm font-medium text-navy">{user?.name}</div>
-                <div className="text-[11px] text-gray-soft capitalize">{user?.role.replace("_", " ")}</div>
-              </div>
-            </div>
+            {/* User Menu */}
+            <DropdownMenu
+              ariaLabel="Account menu"
+              triggerContent={
+                <span className="flex items-center gap-3">
+                  <UserAvatar src={user?.profilePicture} name={user?.name ?? "U"} size="sm" />
+                  <span className="text-right">
+                    <span className="block text-sm font-medium text-navy">{user?.name}</span>
+                    <span className="block text-[11px] text-gray-soft capitalize">{user?.role.replace("_", " ")}</span>
+                  </span>
+                  <ChevronDown size={15} className="text-gray-soft" />
+                </span>
+              }
+              triggerClassName="flex items-center gap-3 px-2 py-1 -mx-2 rounded-control hover:bg-paper transition focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            >
+              {accountMenu}
+            </DropdownMenu>
           </div>
         </header>
 
@@ -484,7 +513,13 @@ export default function Layout() {
               <RefreshCw size={17} />
             </button>
             <NotificationBell />
-            <UserAvatar src={user?.profilePicture} name={user?.name ?? "U"} size="sm" />
+            <DropdownMenu
+              ariaLabel="Account menu"
+              triggerContent={<UserAvatar src={user?.profilePicture} name={user?.name ?? "U"} size="sm" />}
+              triggerClassName="rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition"
+            >
+              {accountMenu}
+            </DropdownMenu>
           </div>
         </header>
 
