@@ -7,9 +7,8 @@ services:
     runtime: node
     plan: free
     buildCommand: >-
-      cd backend && npm ci && npx prisma generate && cd ../frontend && npm ci && cd .. && npm run build
-    startCommand: npm start
-    preDeployCommand: cd backend && npx prisma migrate deploy && node prisma/seed.js
+      cd backend && npm ci --include=dev && npx prisma generate && cd ../frontend && npm ci --include=dev && cd .. && npm run build
+    startCommand: cd backend && npx prisma migrate deploy && node prisma/seed.js && npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
