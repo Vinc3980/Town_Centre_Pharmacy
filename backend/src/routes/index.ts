@@ -1,0 +1,44 @@
+import { Router } from "express";
+import activityRoutes from "./activityRoutes";
+import auditRoutes from "./auditRoutes";
+import authRoutes from "./authRoutes";
+import categoryRoutes from "./categoryRoutes";
+import customerRoutes from "./customerRoutes";
+import dailyRoutes from "./dailyRoutes";
+import dashboardRoutes from "./dashboardRoutes";
+import expenseRoutes from "./expenseRoutes";
+import healthRoutes from "./healthRoutes";
+import medicineRoutes from "./medicineRoutes";
+import notificationRoutes from "./notificationRoutes";
+import profileRoutes from "./profileRoutes";
+import purchaseOrderRoutes from "./purchaseOrderRoutes";
+import reportRoutes from "./reportRoutes";
+import saleRoutes from "./saleRoutes";
+import settingsRoutes from "./settingsRoutes";
+import stockAdjustmentRoutes from "./stockAdjustmentRoutes";
+import stockTransferRoutes from "./stockTransferRoutes";
+import userRoutes from "./userRoutes";
+
+const router = Router();
+
+router.use("/health", healthRoutes);
+router.use("/auth", authRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/medicines", medicineRoutes);
+router.use("/sales", saleRoutes);
+router.use("/customers", customerRoutes);
+router.use("/dashboard", dashboardRoutes);
+router.use("/expenses", expenseRoutes);
+router.use("/audit", auditRoutes);
+router.use("/daily", dailyRoutes);
+router.use("/activity", activityRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/reports", reportRoutes);
+router.use("/users", userRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/stock-adjustments", stockAdjustmentRoutes);
+router.use("/stock-transfers", stockTransferRoutes);
+router.use("/profile", profileRoutes);
+router.use("/purchase-orders", purchaseOrderRoutes);
+
+export default router;

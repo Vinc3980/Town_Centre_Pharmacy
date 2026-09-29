@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+a {
+  color: #0F1B33;
+  transition: color 0.15s ease;
+}
+a:hover {
+  color: #FF7A45;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #b9cdf2; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #a3bde8; }
+
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+.content-gradient {
+  background: #F3F7FC;
+}

@@ -1,0 +1,931 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums (PostgreSQL enum types — the CHECK/enum equivalent of Mongoose enums)
+// ---------------------------------------------------------------------------
+
+enum Role {
+  staff
+  branch_manager
+  admin
+}
+
+enum PharmacyStatus {
+  active
+  inactive
+  suspended
+}
+
+enum BranchStatus {
+  active
+  inactive
+}
+
+enum MedicineStatus {
+  active
+  discontinued
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum PaymentMethod {
+  cash
+  mobile_money
+  card
+  bank_transfer
+  credit
+  other
+  insurance
+}
+
+enum SaleStatus {
+  completed
+  partially_refunded
+  refunded
+  voided
+  held
+}
+
+enum SaleType {
+  retail
+  insurance
+}
+
+enum ClaimStatus {
+  pending
+  submitted
+  approved
+  rejected
+}
+
+enum SessionStatus {
+  pending_approval
+  open
+  pending_close_approval
+  closed
+}
+
+enum ExpenseCategory {
+  rent
+  utilities
+  salaries
+  transport
+  supplier_payment
+  maintenance
+  marketing
+  insurance
+  taxes
+  misc
+}
+
+enum ExpenseStatus {
+  pending
+  approved
+  rejected
+}
+
+enum MovementType {
+  receive
+  sale
+  adjustment
+  transfer
+  damaged
+  expired
+  return
+}
+
+enum TransferStatus {
+  pending
+  in_transit
+  completed
+  cancelled
+}
+
+enum AdjustmentType {
+  increase
+  decrease
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PurchaseOrderStatus {
+  draft
+  sent
+  partially_received
+  received
+  cancelled
+}
+
+enum ReturnStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
+enum ItemCondition {
+  resaleable
+  damaged
+}
+
+enum ReportStatus {
+  draft
+  submitted
+  approved
+  rejected
+}
+
+enum NotificationPriority {
+  info
+  warning
+  critical
+}
+
+enum NotificationCategory {
+  low_stock
+  expiring_medicine
+  sale
+  refund
+  daily_report
+  security
+  system
+}
+
+// ---------------------------------------------------------------------------
+// Core / reference data
+// ---------------------------------------------------------------------------
+
+model Pharmacy {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId           String?        @unique
+  name               String
+  registrationNumber String         @unique
+  phone              String
+  email              String
+  address            String
+  city               String
+  region             String
+  country            String
+  logoUrl            String?
+  currency           String
+  timezone           String
+  status             PharmacyStatus @default(active)
+  // Mongo: `branches` — display-name tag list (real branch entities live in Branch)
+  branchNames        String[]
+  paymentMethods     String[]
+  createdAt          DateTime       @default(now()) @db.Timestamptz
+  updatedAt          DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  settings PharmacySettings?
+  branches Branch[]
+  auditLogs AuditLog[]
+
+  @@index([name])
+  @@index([email])
+  @@index([status])
+  @@map("pharmacies")
+}
+
+model PharmacySettings {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  lowStockThreshold                   Int      @default(10)
+  expiryWarningDays                   Int      @default(30)
+  receiptFooter                       String   @default("Thank you for choosing Adom Pharmacy")
+  allowNegativeStock                  Boolean  @default(false)
+  requireManagerApprovalForRefund     Boolean  @default(true)
+  requireManagerApprovalForStockAdjustment Boolean @default(true)
+  taxRate                             Float    @default(0)
+  taxEnabled                          Boolean  @default(false)
+  discountAuthorizationRequired       Boolean  @default(true)
+  minPasswordLength                   Int      @default(6)
+  sessionExpirationMinutes            Int      @default(60)
+  maxLoginAttempts                    Int      @default(5)
+  lockoutDurationMinutes              Int      @default(15)
+
+  pharmacyId String   @unique @db.Uuid
+  pharmacy   Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+
+  @@map("pharmacy_settings")
+}
+
+model Branch {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId   String?      @unique
+  pharmacyId String       @db.Uuid
+  name       String
+  code       String
+  address    String
+  phone      String
+  managerId  String?      @db.Uuid
+  status     BranchStatus @default(active)
+  createdAt  DateTime     @default(now()) @db.Timestamptz
+  updatedAt  DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  pharmacy Pharmacy @relation(fields: [pharmacyId], references: [id], onDelete: Cascade)
+  manager  User?    @relation("BranchManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  @@unique([pharmacyId, name])
+  @@unique([pharmacyId, code])
+  @@index([pharmacyId])
+  @@index([pharmacyId, status])
+  @@map("branches")
+}
+
+model Category {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId    String?   @unique
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @db.Timestamptz
+  updatedAt   DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  medicines Medicine[]
+
+  @@map("categories")
+}
+
+model Supplier {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId          String?  @unique
+  name              String
+  contactPerson     String?
+  phone             String?
+  email             String?
+  address           String?
+  outstandingBalance Float   @default(0)
+  createdAt         DateTime @default(now()) @db.Timestamptz
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  medicines Medicine[]
+  batches   MedicineBatch[]
+
+  @@map("suppliers")
+}
+
+model User {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId             String?   @unique
+  name                 String
+  email                String    @unique
+  phone                String?
+  staffId              String    @unique
+  profilePicture       String?
+  passwordHash         String
+  role                 Role
+  permissions          String[]
+  branch               String    @default("Main Branch")
+  isActive             Boolean   @default(true)
+  lastLoginAt          DateTime? @db.Timestamptz
+  loginAttempts        Int       @default(0)
+  lockedUntil          DateTime? @db.Timestamptz
+  refreshTokenVersion  Int       @default(0)
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime? @db.Timestamptz
+  salary               Float?
+  salaryStartDate      DateTime? @db.Timestamptz
+  salaryReminderDays   Int?
+  lastSalaryReminderAt DateTime? @db.Timestamptz
+  dateOfBirth          DateTime? @db.Timestamptz
+  gender               String?
+  address              String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  nationalId           String?
+  employmentDate       DateTime? @db.Timestamptz
+  createdAt            DateTime  @default(now()) @db.Timestamptz
+  updatedAt            DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  branchesManaged Branch[] @relation("BranchManager")
+
+  salesCashier           Sale[]
+  salesDispensed         Sale[]      @relation("SaleDispensedBy")
+  sessionsOpened         DailySession[]    @relation("SessionUser")
+  sessionsApproved       DailySession[]    @relation("SessionApprovedBy")
+  sessionsClosed         DailySession[]    @relation("SessionClosedBy")
+  reportsWritten         DailyReport[]     @relation("ReportUser")
+  reportsReviewed        DailyReport[]     @relation("ReportReviewedBy")
+  expensesRecorded       Expense[]         @relation("ExpenseRecorder")
+  expensesApproved       Expense[]         @relation("ExpenseApprover")
+  auditLogs              AuditLog[]
+  movementsPerformed     InventoryMovement[]
+  notifications          Notification[]
+  transfersRequested     StockTransfer[]   @relation("TransferRequester")
+  transfersApproved      StockTransfer[]   @relation("TransferApprover")
+  adjustmentsRequested   StockAdjustment[] @relation("AdjustmentRequester")
+  adjustmentsApproved    StockAdjustment[] @relation("AdjustmentApprover")
+  purchaseOrdersOrdered  PurchaseOrder[]   @relation("PurchaseOrderOrderer")
+  purchaseOrdersReceived PurchaseOrder[]   @relation("PurchaseOrderReceiver")
+  returnsRequested       SaleReturn[]      @relation("ReturnRequester")
+  returnsApproved        SaleReturn[]      @relation("ReturnApprover")
+  vitalsRecorded         CustomerVital[]
+  visitsRecorded         CustomerVisit[]
+
+  @@index([role])
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory
+// ---------------------------------------------------------------------------
+
+model Medicine {
+  id                  String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId            String?       @unique
+  name                String
+  genericName         String?
+  brand               String?
+  categoryId          String        @db.Uuid
+  manufacturer        String?
+  dosage              String?
+  strength            String?
+  form                String?
+  barcode             String?
+  sku                 String        @unique
+  prescriptionRequired Boolean       @default(false)
+  isControlledSubstance Boolean     @default(false)
+  controlledSubstanceClass String?
+  description         String?
+  supplierId          String?       @db.Uuid
+  imageUrl            String?
+  purchasePrice       Float
+  sellingPrice        Float
+  minStock            Int           @default(10)
+  maxStock            Int           @default(500)
+  reorderLevel        Int           @default(20)
+  status              MedicineStatus @default(active)
+  createdAt           DateTime      @default(now()) @db.Timestamptz
+  updatedAt           DateTime      @default(now()) @updatedAt @db.Timestamptz
+
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplier   Supplier?   @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  batches    MedicineBatch[]
+  saleItems  SaleItem[]
+  returnItems SaleReturnItem[]
+  movements  InventoryMovement[]
+  adjustments StockAdjustment[]
+  transferItems     StockTransferItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@index([name])
+  @@index([genericName])
+  @@index([barcode])
+  @@map("medicines")
+}
+
+model MedicineBatch {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId          String?   @unique
+  medicineId        String    @db.Uuid
+  batchNumber       String
+  quantity          Int
+  purchasePrice     Float
+  sellingPrice      Float
+  manufacturingDate DateTime? @db.Timestamptz
+  expiryDate        DateTime  @db.Timestamptz
+  supplierId        String?   @db.Uuid
+  dateReceived      DateTime  @default(now()) @db.Timestamptz
+  createdAt         DateTime  @default(now()) @db.Timestamptz
+  updatedAt         DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  medicine   Medicine  @relation(fields: [medicineId], references: [id], onDelete: Cascade)
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  saleItems    SaleItem[]
+  returnItems  SaleReturnItem[]
+  movements    InventoryMovement[]
+
+  @@index([medicineId])
+  @@index([batchNumber])
+  @@index([expiryDate])
+  @@map("medicine_batches")
+}
+
+model InventoryMovement {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId       String?      @unique
+  medicineId     String       @db.Uuid
+  batchId        String?      @db.Uuid
+  type           MovementType
+  quantityChange Int
+  reason         String?
+  performedById  String       @db.Uuid
+  createdAt      DateTime     @default(now()) @db.Timestamptz
+
+  medicine    Medicine      @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+  batch       MedicineBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  performedBy User          @relation(fields: [performedById], references: [id], onDelete: Restrict)
+
+  @@index([medicineId])
+  @@index([createdAt(sort: Desc)])
+  @@map("inventory_movements")
+}
+
+model StockTransfer {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId        String?        @unique
+  referenceNumber String         @unique
+  fromLocation    String
+  toLocation      String
+  status          TransferStatus @default(pending)
+  requestedById   String         @db.Uuid
+  approvedById    String?        @db.Uuid
+  notes           String?
+  completedAt     DateTime?      @db.Timestamptz
+  createdAt       DateTime       @default(now()) @db.Timestamptz
+  updatedAt       DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  requestedBy User @relation("TransferRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedBy  User? @relation("TransferApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  products StockTransferItem[]
+
+  @@index([fromLocation])
+  @@index([toLocation])
+  @@index([createdAt(sort: Desc)])
+  @@map("stock_transfers")
+}
+
+model StockTransferItem {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stockTransferId String      @db.Uuid
+  seq            Int
+  medicineId     String       @db.Uuid
+  quantity       Int
+
+  stockTransfer StockTransfer @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  medicine      Medicine      @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+
+  @@index([stockTransferId])
+  @@map("stock_transfer_items")
+}
+
+model StockAdjustment {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId        String?        @unique
+  referenceNumber String         @unique
+  medicineId      String         @db.Uuid
+  type            AdjustmentType
+  quantity        Int
+  reason          String
+  location        String
+  status          ApprovalStatus @default(pending)
+  requestedById   String         @db.Uuid
+  approvedById    String?        @db.Uuid
+  reviewNotes     String?
+  notes           String?
+  createdAt       DateTime       @default(now()) @db.Timestamptz
+  updatedAt       DateTime       @default(now()) @updatedAt @db.Timestamptz
+
+  medicine    Medicine @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+  requestedBy User     @relation("AdjustmentRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedBy  User?    @relation("AdjustmentApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([medicineId])
+  @@index([createdAt(sort: Desc)])
+  @@index([referenceNumber, medicineId, status])
+  @@map("stock_adjustments")
+}
+
+model PurchaseOrder {
+  id                   String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId             String?              @unique
+  referenceNumber      String               @unique
+  supplier             String
+  totalAmount          Float
+  status               PurchaseOrderStatus  @default(draft)
+  orderedById          String               @db.Uuid
+  expectedDeliveryDate DateTime?            @db.Timestamptz
+  receivedAt           DateTime?            @db.Timestamptz
+  receivedById         String?              @db.Uuid
+  notes                String?
+  createdAt            DateTime             @default(now()) @db.Timestamptz
+  updatedAt            DateTime             @default(now()) @updatedAt @db.Timestamptz
+
+  orderedBy User @relation("PurchaseOrderOrderer", fields: [orderedById], references: [id], onDelete: Restrict)
+  receivedBy User? @relation("PurchaseOrderReceiver", fields: [receivedById], references: [id], onDelete: SetNull)
+  products PurchaseOrderItem[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([supplier])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  purchaseOrderId String        @db.Uuid
+  seq             Int
+  medicineId      String        @db.Uuid
+  quantity        Int
+  unitPrice       Float
+
+  purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  medicine      Medicine      @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+
+  @@index([purchaseOrderId])
+  @@map("purchase_order_items")
+}
+
+// ---------------------------------------------------------------------------
+// Sales / customers
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId          String?  @unique
+  name              String
+  phone             String
+  email             String?
+  dateOfBirth       DateTime? @db.Timestamptz
+  gender            Gender?
+  bloodGroup        String?
+  address           String?
+  emergencyContact  String?
+  emergencyPhone    String?
+  ghanaCardNumber   String?
+  allergies         String[]
+  medicalConditions String[]
+  notes             String?
+  profileImage      String   @default("")
+  outstandingBalance Float   @default(0)
+  createdAt         DateTime @default(now()) @db.Timestamptz
+  updatedAt         DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  sales  Sale[]
+  vitals CustomerVital[]
+  visits CustomerVisit[]
+
+  @@index([phone])
+  @@map("customers")
+}
+
+model CustomerVital {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId   String    @db.Uuid
+  seq          Int
+  date         DateTime  @default(now()) @db.Timestamptz
+  bloodPressure String?
+  heartRate    Int?
+  temperature  Float?
+  weight       Float?
+  height       Float?
+  notes        String?
+  recordedById String?   @db.Uuid
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recordedBy User?    @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@map("customer_vitals")
+}
+
+model CustomerVisit {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customerId   String    @db.Uuid
+  seq          Int
+  date         DateTime  @default(now()) @db.Timestamptz
+  reason       String
+  tests        String?
+  results      String?
+  notes        String?
+  recordedById String?   @db.Uuid
+
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  recordedBy User?    @relation(fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@map("customer_visits")
+}
+
+model Sale {
+  id                String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId          String?     @unique
+  transactionNumber String      @unique
+  customerId        String?     @db.Uuid
+  cashierId         String      @db.Uuid
+  branch            String      @default("Main Branch")
+  subtotal          Float
+  discount          Float       @default(0)
+  tax               Float       @default(0)
+  total             Float
+  costOfGoods       Float
+  paymentMethod     PaymentMethod @default(cash)
+  amountReceived    Float?
+  changeAmount      Float? // Mongo: `change`
+  status            SaleStatus  @default(completed)
+  saleType          SaleType     @default(retail)
+  insuranceProvider String?
+  policyOrNhisNumber String?
+  claimStatus       ClaimStatus  @default(pending)
+  prescriptionReference String?
+  dispensedById     String?     @db.Uuid
+  refundReason      String?
+  refundedAmount    Float       @default(0)
+  outstandingAmount Float       @default(0)
+  dueDate           DateTime?   @db.Timestamptz
+  createdAt         DateTime    @default(now()) @db.Timestamptz
+  updatedAt         DateTime    @default(now()) @updatedAt @db.Timestamptz
+
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  cashier  User      @relation(fields: [cashierId], references: [id], onDelete: Restrict)
+  dispensedBy User?  @relation("SaleDispensedBy", fields: [dispensedById], references: [id], onDelete: SetNull)
+
+  items    SaleItem[]
+  payments SalePayment[]
+  returns  SaleReturn[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([cashierId])
+  @@index([customerId])
+  @@index([status])
+  @@index([dueDate, outstandingAmount])
+  @@map("sales")
+}
+
+model SaleItem {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  saleId     String @db.Uuid
+  seq        Int
+  medicineId String @db.Uuid
+  batchId    String @db.Uuid
+  name       String
+  quantity   Int
+  unitPrice  Float
+  discount   Float  @default(0)
+  subtotal   Float
+
+  sale     Sale          @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  medicine Medicine      @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+  batch    MedicineBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@map("sale_items")
+}
+
+model SalePayment {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  saleId    String        @db.Uuid
+  seq       Int
+  method    PaymentMethod
+  amount    Float
+  reference String?
+  date      DateTime      @default(now()) @db.Timestamptz
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@map("sale_payments")
+}
+
+model SaleReturn {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId        String?      @unique
+  saleId          String       @db.Uuid
+  transactionNumber String     @unique
+  refundAmount    Float
+  status          ReturnStatus @default(pending)
+  requestedById   String       @db.Uuid
+  approvedById    String?      @db.Uuid
+  rejectionReason String?
+  processedAt     DateTime?    @db.Timestamptz
+  createdAt       DateTime     @default(now()) @db.Timestamptz
+  updatedAt       DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  sale        Sale        @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  requestedBy User        @relation("ReturnRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedBy  User?       @relation("ReturnApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  items       SaleReturnItem[]
+
+  @@index([saleId])
+  @@index([createdAt(sort: Desc)])
+  @@map("sale_returns")
+}
+
+model SaleReturnItem {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  saleReturnId     String        @db.Uuid
+  seq              Int
+  medicineId       String        @db.Uuid
+  batchId          String        @db.Uuid
+  name             String
+  originalQuantity Int
+  returnQuantity   Int
+  unitPrice        Float
+  subtotal         Float
+  condition        ItemCondition @default(resaleable)
+  reason           String
+
+  saleReturn SaleReturn   @relation(fields: [saleReturnId], references: [id], onDelete: Cascade)
+  medicine   Medicine     @relation(fields: [medicineId], references: [id], onDelete: Restrict)
+  batch      MedicineBatch @relation(fields: [batchId], references: [id], onDelete: Restrict)
+
+  @@index([saleReturnId])
+  @@map("sale_return_items")
+}
+
+// ---------------------------------------------------------------------------
+// Finance / sessions / reporting
+// ---------------------------------------------------------------------------
+
+model DailySession {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId     String?       @unique
+  userId       String        @db.Uuid
+  date         DateTime      @default(now()) @db.Timestamptz
+  openingCash  Float
+  status       SessionStatus @default(pending_approval)
+  closedAt     DateTime?     @db.Timestamptz
+  approvedById String?       @db.Uuid
+  approvedAt   DateTime?     @db.Timestamptz
+  closedById   String?       @db.Uuid
+  createdAt    DateTime      @default(now()) @db.Timestamptz
+  updatedAt    DateTime      @default(now()) @updatedAt @db.Timestamptz
+
+  // Mongo: `closeAggregates` embed — flattened to nullable columns (1:1)
+  totalSales           Float?
+  cashSales            Float?
+  mobileMoneySales     Float?
+  cardSales            Float?
+  bankTransferSales    Float?
+  refunds              Float?
+  cashRefunds          Float?
+  discounts            Float?
+  expenses             Float?
+  cashExpenses         Float?
+  expectedCash         Float?
+  actualCash           Float?
+  actualMobileMoney    Float?
+  actualCard           Float?
+  actualBankTransfer   Float?
+  variance             Float?
+
+  user       User  @relation("SessionUser", fields: [userId], references: [id], onDelete: Restrict)
+  approvedBy User? @relation("SessionApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  closedBy   User? @relation("SessionClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+
+  reports DailyReport[]
+
+  @@index([userId, date(sort: Desc)])
+  @@index([status])
+  @@map("daily_sessions")
+}
+
+model DailyReport {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId          String?      @unique
+  sessionId         String       @db.Uuid
+  userId            String       @db.Uuid
+  date              DateTime     @db.Timestamptz
+  totalSales        Float
+  cashSales         Float
+  mobileMoneySales  Float
+  cardSales         Float
+  bankTransferSales Float
+  refunds           Float
+  cashRefunds       Float
+  discounts         Float
+  expenses          Float
+  cashExpenses      Float
+  expectedCash      Float
+  actualCash        Float       @default(0)
+  variance          Float       @default(0)
+  notes             String?
+  status            ReportStatus @default(draft)
+  reviewedById      String?     @db.Uuid
+  reviewNotes       String?
+  reviewedAt        DateTime?   @db.Timestamptz
+  createdAt         DateTime    @default(now()) @db.Timestamptz
+  updatedAt         DateTime    @default(now()) @updatedAt @db.Timestamptz
+
+  session   DailySession @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  user      User         @relation("ReportUser", fields: [userId], references: [id], onDelete: Restrict)
+  reviewedBy User?       @relation("ReportReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, date(sort: Desc)])
+  @@index([status])
+  @@map("daily_reports")
+}
+
+model Expense {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId        String?         @unique
+  category        ExpenseCategory
+  description     String
+  amount          Float
+  paymentMethod   PaymentMethod   @default(cash)
+  recordedById    String          @db.Uuid
+  approvedById    String?         @db.Uuid
+  status          ExpenseStatus   @default(pending)
+  rejectionReason String?
+  receiptUrl      String?
+  date            DateTime        @default(now()) @db.Timestamptz
+  createdAt       DateTime        @default(now()) @db.Timestamptz
+  updatedAt       DateTime        @default(now()) @updatedAt @db.Timestamptz
+
+  recordedBy User  @relation("ExpenseRecorder", fields: [recordedById], references: [id], onDelete: Restrict)
+  approvedBy User? @relation("ExpenseApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@map("expenses")
+}
+
+model AuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId    String?  @unique
+  userId      String   @db.Uuid
+  userName    String
+  pharmacyId  String?  @db.Uuid
+  branch      String?
+  action      String
+  module      String
+  entity      String?
+  entityId    String?
+  description String
+  before      Json?    @db.JsonB
+  after       Json?    @db.JsonB
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  pharmacy Pharmacy? @relation(fields: [pharmacyId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([module, action])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
+
+model Notification {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId    String?              @unique
+  title       String
+  message     String
+  priority    NotificationPriority @default(info)
+  category    NotificationCategory
+  userId      String?              @db.Uuid
+  isRead      Boolean              @default(false)
+  targetRoles String[]             @default(["admin"])
+  referenceId String?
+  createdAt   DateTime             @default(now()) @db.Timestamptz
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead, createdAt(sort: Desc)])
+  @@index([category, referenceId])
+  @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Orphaned legacy data (kept for count/data parity; no live code paths)
+// ---------------------------------------------------------------------------
+
+model DispensingRecord {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  legacyId             String?  @unique
+  // All 14 rows predate the current dataset generation: every reference id is
+  // dangling by design, so they are preserved as plain text (no FKs).
+  legacyPharmacyId     String?
+  legacyPrescriptionId String?
+  legacyMedicineId     String?
+  legacyBatchId        String?
+  legacyPharmacistId   String?
+  quantity             Int
+  dispensedAt          DateTime @db.Timestamptz
+  createdAt            DateTime @default(now()) @db.Timestamptz
+
+  @@map("dispensing_records")
+}
+
+// Rows whose required references point at the pre-reseed dataset generation
+// and therefore cannot satisfy FK constraints. Preserved whole (extended JSON
+// converted to plain JSON) so every source collection still reconciles:
+// table rows + quarantined rows = source document count.
+model LegacyOrphan {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  collection String
+  legacyId   String
+  reason     String
+  doc        Json     @db.JsonB
+  createdAt  DateTime @default(now()) @db.Timestamptz
+
+  @@index([collection])
+  @@map("legacy_orphans")
+}

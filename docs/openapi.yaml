@@ -1,0 +1,4488 @@
+openapi: 3.0.3
+info:
+  title: Adom Pharmacy Management System API
+  description: |
+    Production-grade pharmacy management platform supporting multi-branch operations,
+    inventory (FEFO), POS, prescriptions, and analytics.
+
+    **Authentication:** All protected endpoints require a Bearer JWT token in the
+    `Authorization` header.
+
+    **Currency:** All monetary values are in Ghana Cedis (GHS).
+
+    **Rate Limiting:** Login endpoint is rate-limited to 20 requests per 15 minutes per IP.
+  version: 1.0.0
+  contact:
+    name: Adom Pharmacy Support
+    email: support@adompharmacy.gh
+  license:
+    name: Private
+    url: https://adompharmacy.gh/license
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Development
+  - url: https://api.adompharmacy.com/api/v1
+    description: Production
+
+tags:
+  - name: Auth
+    description: Authentication and session management
+  - name: Users
+    description: Staff user administration
+  - name: Medicines
+    description: Medicine catalogue and stock management
+  - name: Sales
+    description: Point-of-sale transactions, held sales, and refunds
+  - name: Customers
+    description: Customer records
+  - name: Expenses
+    description: Expense tracking and approval
+  - name: Daily
+    description: Daily cash sessions and end-of-day reports
+  - name: Reports
+    description: Analytics and report generation (CSV, Excel, PDF export)
+  - name: Dashboard
+    description: Dashboard summaries and charts
+  - name: Notifications
+    description: In-app notifications
+  - name: Settings
+    description: Pharmacy, inventory, sales, and security settings
+  - name: Audit
+    description: Audit trail logs
+  - name: Profile
+    description: Current user profile management
+  - name: Health
+    description: API health check
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ─── Health ────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: API health check
+      description: Returns API status, database connectivity, version, and uptime. No authentication required.
+      security: []
+      operationId: healthCheck
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  # ─── Auth ──────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Authenticate user
+      description: |
+        Validates credentials and returns access/refresh JWT tokens.
+        Accounts are locked after 5 failed attempts for 15 minutes.
+        Rate limited to 20 requests per 15 minutes per IP.
+      security: []
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "423":
+          description: Account locked due to too many failed attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      description: Exchange a valid refresh token for a new access token.
+      security: []
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        "200":
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                        example: eyJhbGciOiJIUzI1NiIs...
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout user
+      description: Invalidates the current refresh token by incrementing the token version.
+      operationId: logout
+      responses:
+        "200":
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logged out
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      description: Returns the profile of the currently authenticated user.
+      operationId: getMe
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ─── Users ─────────────────────────────────────────────
+  /users:
+    get:
+      tags: [Users]
+      summary: List all users
+      description: Returns all staff users. Requires `manage_users` permission.
+      operationId: listUsers
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Users]
+      summary: Create a new user
+      description: Creates a new staff account. Requires `manage_users` permission.
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      description: Returns a single user. Requires `manage_users` permission.
+      operationId: getUserById
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Users]
+      summary: Update user
+      description: Updates user details. Requires `manage_users` permission. Cannot change the owner's role.
+      operationId: updateUser
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{id}/deactivate:
+    post:
+      tags: [Users]
+      summary: Deactivate user
+      description: Disables a user account. Cannot deactivate the owner or yourself.
+      operationId: deactivateUser
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User deactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User deactivated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /users/{id}/reactivate:
+    post:
+      tags: [Users]
+      summary: Reactivate user
+      description: Re-enables a previously deactivated user account.
+      operationId: reactivateUser
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User reactivated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User reactivated
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Medicines ─────────────────────────────────────────
+  /medicines:
+    get:
+      tags: [Medicines]
+      summary: List all medicines
+      description: Returns medicines with current stock levels. Supports search and filtering.
+      operationId: listMedicines
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by medicine name
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, discontinued]
+          description: Filter by status
+      responses:
+        "200":
+          description: List of medicines with stock info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MedicineWithStock"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags: [Medicines]
+      summary: Create a new medicine
+      description: Adds a new medicine to the catalogue. Requires `manage_medicines` permission.
+      operationId: createMedicine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMedicineRequest"
+      responses:
+        "201":
+          description: Medicine created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Medicine"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /medicines/barcode/{barcode}:
+    get:
+      tags: [Medicines]
+      summary: Lookup medicine by barcode
+      description: Returns medicine details and stock for a given barcode.
+      operationId: lookupBarcode
+      parameters:
+        - name: barcode
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "890123001001"
+      responses:
+        "200":
+          description: Medicine found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/MedicineWithStock"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /medicines/{id}:
+    put:
+      tags: [Medicines]
+      summary: Update medicine
+      description: Updates medicine details. Requires `manage_medicines` permission.
+      operationId: updateMedicine
+      parameters:
+        - $ref: "#/components/parameters/MedicineId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMedicineRequest"
+      responses:
+        "200":
+          description: Medicine updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Medicine"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      tags: [Medicines]
+      summary: Delete medicine
+      description: Permanently removes a medicine. Requires `manage_medicines` permission.
+      operationId: deleteMedicine
+      parameters:
+        - $ref: "#/components/parameters/MedicineId"
+      responses:
+        "200":
+          description: Medicine deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Medicine deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /medicines/{id}/discontinue:
+    post:
+      tags: [Medicines]
+      summary: Discontinue medicine
+      description: Marks a medicine as discontinued. It can no longer be sold. Requires `manage_medicines` permission.
+      operationId: discontinueMedicine
+      parameters:
+        - $ref: "#/components/parameters/MedicineId"
+      responses:
+        "200":
+          description: Medicine discontinued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Medicine"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /medicines/stock/receive:
+    post:
+      tags: [Medicines]
+      summary: Receive stock (new batch)
+      description: |
+        Creates a new batch for a medicine and records the inventory movement.
+        Requires `manage_inventory` permission. Triggers low-stock and expiry notifications.
+      operationId: receiveStock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceiveStockRequest"
+      responses:
+        "201":
+          description: Batch created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/MedicineBatch"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /medicines/stock/adjust:
+    post:
+      tags: [Medicines]
+      summary: Adjust stock quantity
+      description: Adjusts a batch's stock level by a positive or negative amount. Requires `perform_stock_adjustment` permission.
+      operationId: adjustStock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdjustStockRequest"
+      responses:
+        "200":
+          description: Stock adjusted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/MedicineBatch"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /medicines/reports/low-stock:
+    get:
+      tags: [Medicines]
+      summary: Low stock report
+      description: Returns active medicines whose total stock is at or below the reorder level. Requires `view_reports` permission.
+      operationId: medicineLowStockReport
+      responses:
+        "200":
+          description: Low stock items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        medicine:
+                          $ref: "#/components/schemas/Medicine"
+                        totalStock:
+                          type: integer
+                          example: 8
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /medicines/reports/expiry:
+    get:
+      tags: [Medicines]
+      summary: Expiry report
+      description: Returns batches expiring within the given number of days. Requires `view_reports` permission.
+      operationId: medicineExpiryReport
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+          description: Number of days to check for expiry
+      responses:
+        "200":
+          description: Expiring batches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/MedicineBatch"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ─── Sales ─────────────────────────────────────────────
+  /sales:
+    get:
+      tags: [Sales]
+      summary: List sales
+      description: Returns sales with optional date, cashier, status, and search filters. Requires `view_reports` permission.
+      operationId: listSales
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date (ISO 8601)
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date (ISO 8601)
+        - name: cashier
+          in: query
+          schema:
+            type: string
+          description: Filter by cashier user ID
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [completed, partially_refunded, refunded, voided, held]
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by transaction number
+      responses:
+        "200":
+          description: List of sales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Sales]
+      summary: Create a sale (POS checkout)
+      description: |
+        Processes a complete sale. Deducts inventory using FEFO (First Expiry, First Out),
+        records payments, and emits real-time events. Requires `process_sales` permission.
+      operationId: createSale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSaleRequest"
+      responses:
+        "201":
+          description: Sale completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Sale"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /sales/held:
+    get:
+      tags: [Sales]
+      summary: List held sales
+      description: Returns all sales with status "held" (parked transactions). Requires `process_sales` permission.
+      operationId: listHeldSales
+      responses:
+        "200":
+          description: List of held sales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Sale"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sales/refunds/pending:
+    get:
+      tags: [Sales]
+      summary: List pending refund requests
+      description: Returns refund requests awaiting manager approval. Requires `process_refunds` permission.
+      operationId: listPendingRefunds
+      responses:
+        "200":
+          description: Pending refunds
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SaleReturn"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sales/{id}:
+    get:
+      tags: [Sales]
+      summary: Get sale detail
+      description: Returns full sale details including linked return records. Requires `view_reports` permission.
+      operationId: getSaleDetail
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      responses:
+        "200":
+          description: Sale detail with returns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      sale:
+                        $ref: "#/components/schemas/Sale"
+                      returns:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/SaleReturn"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sales/{id}/receipt:
+    get:
+      tags: [Sales]
+      summary: Get sale receipt
+      description: Returns formatted receipt data for a sale. Requires `view_reports` permission.
+      operationId: getSaleReceipt
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      responses:
+        "200":
+          description: Receipt data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Receipt"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sales/hold:
+    post:
+      tags: [Sales]
+      summary: Hold (park) a sale
+      description: Temporarily holds a sale without completing payment. Reserves stock. Requires `process_sales` permission.
+      operationId: holdSale
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HoldSaleRequest"
+      responses:
+        "201":
+          description: Sale held
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Sale"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sales/{id}/resume:
+    post:
+      tags: [Sales]
+      summary: Resume a held sale
+      description: Completes a previously held sale by processing payment and deducting inventory. Requires `process_sales` permission.
+      operationId: resumeSale
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeSaleRequest"
+      responses:
+        "200":
+          description: Sale resumed and completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Sale"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sales/{id}/refund:
+    post:
+      tags: [Sales]
+      summary: Request a refund
+      description: |
+        Creates a return request for items in a sale. If manager approval is required,
+        the refund is queued as "pending". Requires `process_refunds` permission.
+      operationId: requestRefund
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundRequest"
+      responses:
+        "201":
+          description: Refund request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SaleReturn"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /sales/{id}/void:
+    post:
+      tags: [Sales]
+      summary: Void a sale
+      description: |
+        Cancels a sale and restores inventory. Cannot void already refunded or voided sales.
+        Requires `process_refunds` permission.
+      operationId: voidSale
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      responses:
+        "200":
+          description: Sale voided
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Sale"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sales/refunds/{returnId}/approve:
+    post:
+      tags: [Sales]
+      summary: Approve or reject a refund
+      description: |
+        Approves a pending refund (restores stock for resaleable items) or rejects it
+        with a reason. Requires `process_refunds` permission.
+      operationId: approveRefund
+      parameters:
+        - name: returnId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SaleReturn ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejectionReason:
+                  type: string
+                  description: If provided, the refund is rejected with this reason
+                  example: Item opened and cannot be resold
+      responses:
+        "200":
+          description: Refund approved or rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SaleReturn"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sales/{id}/held:
+    delete:
+      tags: [Sales]
+      summary: Delete a held sale
+      description: Permanently removes a held (parked) sale. Requires `process_sales` permission.
+      operationId: deleteHeldSale
+      parameters:
+        - $ref: "#/components/parameters/SaleId"
+      responses:
+        "200":
+          description: Held sale deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Held sale deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Customers ─────────────────────────────────────────
+  /customers:
+    get:
+      tags: [Customers]
+      summary: List customers
+      description: Returns customers, optionally filtered by search term (name or phone).
+      operationId: listCustomers
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name or phone number
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      tags: [Customers]
+      summary: Create customer
+      description: Adds a new customer record. Requires `process_sales` permission.
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCustomerRequest"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Customer"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /customers/{id}:
+    put:
+      tags: [Customers]
+      summary: Update customer
+      description: Updates a customer's details. Requires `process_sales` permission.
+      operationId: updateCustomer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Customer ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Ama Owusu
+                phone:
+                  type: string
+                  example: "0241234567"
+                notes:
+                  type: string
+                  example: Prefers SMS notifications
+      responses:
+        "200":
+          description: Customer updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Customer"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Expenses ──────────────────────────────────────────
+  /expenses:
+    get:
+      tags: [Expenses]
+      summary: List expenses
+      description: Returns expenses with optional filters. Requires `manage_expenses` permission.
+      operationId: listExpenses
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [rent, utilities, salaries, transport, supplier_payment, maintenance, marketing, insurance, taxes, misc]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by description
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Expense"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+    post:
+      tags: [Expenses]
+      summary: Create expense
+      description: Records a new expense. Supports `multipart/form-data` with optional receipt file. Requires `manage_expenses` permission.
+      operationId: createExpense
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [category, description, amount]
+              properties:
+                category:
+                  type: string
+                  enum: [rent, utilities, salaries, transport, supplier_payment, maintenance, marketing, insurance, taxes, misc]
+                  example: utilities
+                description:
+                  type: string
+                  example: Monthly electricity bill
+                amount:
+                  type: number
+                  format: float
+                  example: 850.00
+                paymentMethod:
+                  type: string
+                  enum: [cash, mobile_money, card, bank_transfer, other]
+                  example: mobile_money
+                date:
+                  type: string
+                  format: date
+                  example: "2026-09-01"
+                receipt:
+                  type: string
+                  format: binary
+                  description: Optional receipt image/PDF
+      responses:
+        "201":
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Expense"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /expenses/{id}:
+    get:
+      tags: [Expenses]
+      summary: Get expense by ID
+      description: Returns full expense details. Requires `manage_expenses` permission.
+      operationId: getExpenseById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Expense detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Expense"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      tags: [Expenses]
+      summary: Update expense
+      description: Updates a pending expense. Requires `manage_expenses` permission.
+      operationId: updateExpense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  enum: [rent, utilities, salaries, transport, supplier_payment, maintenance, marketing, insurance, taxes, misc]
+                description:
+                  type: string
+                amount:
+                  type: number
+                  format: float
+                paymentMethod:
+                  type: string
+                  enum: [cash, mobile_money, card, bank_transfer, other]
+                date:
+                  type: string
+                  format: date
+                receipt:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Expense updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Expense"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /expenses/{id}/approve:
+    post:
+      tags: [Expenses]
+      summary: Approve or reject expense
+      description: Approves a pending expense or rejects it with a reason. Requires `manage_expenses` permission.
+      operationId: approveExpense
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejectionReason:
+                  type: string
+                  description: If provided, the expense is rejected
+                  example: Receipt not attached
+      responses:
+        "200":
+          description: Expense approved or rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Expense"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Daily ─────────────────────────────────────────────
+  /daily/sessions:
+    post:
+      tags: [Daily]
+      summary: Open daily cash session
+      description: Opens a new cash session with an opening float. Only one open session per user. Requires `process_sales` permission.
+      operationId: openSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [openingCash]
+              properties:
+                openingCash:
+                  type: number
+                  format: float
+                  description: Opening cash float in GHS
+                  example: 500.00
+      responses:
+        "201":
+          description: Session opened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailySession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+    get:
+      tags: [Daily]
+      summary: List daily sessions
+      description: |
+        Returns sessions. Managers see all sessions; staff see only their own.
+        Requires `view_reports` permission.
+      operationId: listSessions
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, closed]
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DailySession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /daily/sessions/close:
+    post:
+      tags: [Daily]
+      summary: Close daily cash session
+      description: Closes the current open session and computes cash variance. Requires `process_sales` permission.
+      operationId: closeSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actualCash]
+              properties:
+                actualCash:
+                  type: number
+                  format: float
+                  description: Actual cash counted in drawer (GHS)
+                  example: 1243.50
+                notes:
+                  type: string
+                  example: Variance due to overpayment
+      responses:
+        "200":
+          description: Session closed with aggregates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailySession"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /daily/sessions/current:
+    get:
+      tags: [Daily]
+      summary: Get current open session
+      description: Returns the authenticated user's currently open cash session, if any. Requires `process_sales` permission.
+      operationId: getCurrentSession
+      responses:
+        "200":
+          description: Current session or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    oneOf:
+                      - $ref: "#/components/schemas/DailySession"
+                      - type: "null"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /daily/reports/submit:
+    post:
+      tags: [Daily]
+      summary: Submit daily report
+      description: Submits an end-of-day report for the most recently closed session. Requires `process_sales` permission.
+      operationId: submitReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actualCash]
+              properties:
+                actualCash:
+                  type: number
+                  format: float
+                  example: 1243.50
+                notes:
+                  type: string
+                  example: All figures verified
+      responses:
+        "201":
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailyReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /daily/reports/pending:
+    get:
+      tags: [Daily]
+      summary: List pending daily reports
+      description: Returns reports with status "submitted" or "draft". Requires `view_reports` permission.
+      operationId: listPendingReports
+      responses:
+        "200":
+          description: Pending reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DailyReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /daily/reports:
+    get:
+      tags: [Daily]
+      summary: List all daily reports
+      description: Returns all reports. Managers see all; staff see their own. Requires `view_reports` permission.
+      operationId: listAllReports
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, submitted, approved, rejected]
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DailyReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /daily/reports/{id}:
+    get:
+      tags: [Daily]
+      summary: Get daily report detail
+      description: Returns a single report with user and session populated. Requires `view_reports` permission.
+      operationId: getReportById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Report detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailyReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /daily/reports/{id}/approve:
+    post:
+      tags: [Daily]
+      summary: Approve daily report
+      description: Approves a submitted report. Only owner and branch_manager can approve. Requires `view_reports` permission.
+      operationId: approveReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reviewNotes:
+                  type: string
+                  example: Figures look correct
+      responses:
+        "200":
+          description: Report approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailyReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /daily/reports/{id}/reject:
+    post:
+      tags: [Daily]
+      summary: Reject daily report
+      description: Rejects a submitted report with a required reason. Only owner and branch_manager can reject. Requires `view_reports` permission.
+      operationId: rejectReport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reviewNotes]
+              properties:
+                reviewNotes:
+                  type: string
+                  example: Cash variance too high, please recount
+      responses:
+        "200":
+          description: Report rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DailyReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Reports ───────────────────────────────────────────
+  /reports/sales:
+    get:
+      tags: [Reports]
+      summary: Sales report
+      description: Returns paginated sales data with summary (revenue, cost, profit, discount, tax). Supports CSV, Excel, PDF export. Requires `view_reports` permission.
+      operationId: salesReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: cashier
+          in: query
+          schema:
+            type: string
+        - name: paymentMethod
+          in: query
+          schema:
+            type: string
+            enum: [cash, mobile_money, card, bank_transfer, other]
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: branch
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+          description: Export format (default: json)
+      responses:
+        "200":
+          description: Sales report data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /reports/inventory:
+    get:
+      tags: [Reports]
+      summary: Inventory report
+      description: Returns batch-level inventory with stock values. Requires `view_reports` permission.
+      operationId: inventoryReport
+      parameters:
+        - name: medicine
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Inventory report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/expenses:
+    get:
+      tags: [Reports]
+      summary: Expense report
+      description: Returns expenses with totals. Requires `view_reports` permission.
+      operationId: expenseReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: paymentMethod
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Expense report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/profit:
+    get:
+      tags: [Reports]
+      summary: Profit report
+      description: Returns daily profit breakdown (revenue, COGS, gross profit, expenses, net profit). Requires `view_reports` permission.
+      operationId: profitReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: branch
+          in: query
+          schema:
+            type: string
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Profit report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/staff:
+    get:
+      tags: [Reports]
+      summary: Staff performance report
+      description: Returns per-staff metrics (sales, profit, transactions, sessions, reports). Requires `view_reports` permission.
+      operationId: staffReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Staff report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/stock-movements:
+    get:
+      tags: [Reports]
+      summary: Stock movement report
+      description: Returns inventory movement history (receive, sale, adjustment, return, damaged, expired). Requires `view_reports` permission.
+      operationId: stockMovementReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: medicine
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Stock movement report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/expiry:
+    get:
+      tags: [Reports]
+      summary: Expiry report
+      description: Returns batches expiring within the configured number of days. Requires `view_reports` permission.
+      operationId: expiryReport
+      parameters:
+        - name: expiryDays
+          in: query
+          schema:
+            type: integer
+            default: 90
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Expiry report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/low-stock:
+    get:
+      tags: [Reports]
+      summary: Low stock report
+      description: Returns medicines at or below reorder level. Requires `view_reports` permission.
+      operationId: lowStockReport
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Low stock report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/daily:
+    get:
+      tags: [Reports]
+      summary: Daily summary report
+      description: Returns daily report data with sales breakdown by payment method. Requires `view_reports` permission.
+      operationId: dailyReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Daily report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  /reports/purchases:
+    get:
+      tags: [Reports]
+      summary: Purchase report
+      description: Returns stock receive (purchase) history. Requires `view_reports` permission.
+      operationId: purchaseReport
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: medicine
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv, xlsx, pdf]
+      responses:
+        "200":
+          description: Purchase report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportResponse"
+
+  # ─── Dashboard ─────────────────────────────────────────
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Dashboard summary
+      description: Returns aggregated metrics: revenue, profit, transactions, expenses, inventory value, low stock count, expiring/expired batches, active staff, open sessions. Requires `view_dashboard` permission.
+      operationId: dashboardSummary
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: branch
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /dashboard/revenue-trend:
+    get:
+      tags: [Dashboard]
+      summary: Revenue trend
+      description: Returns daily revenue, transactions, and profit for the past N days. Requires `view_dashboard` permission.
+      operationId: revenueTrend
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+        - name: branch
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Revenue trend data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          example: "2026-09-01"
+                        revenue:
+                          type: number
+                          example: 2450.00
+                        transactions:
+                          type: integer
+                          example: 12
+                        profit:
+                          type: number
+                          example: 980.00
+
+  /dashboard/payment-breakdown:
+    get:
+      tags: [Dashboard]
+      summary: Payment method breakdown
+      description: Returns totals per payment method. Requires `view_dashboard` permission.
+      operationId: paymentBreakdown
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+      responses:
+        "200":
+          description: Payment breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        method:
+                          type: string
+                          example: cash
+                        total:
+                          type: number
+                          example: 3200.00
+                        count:
+                          type: integer
+                          example: 28
+
+  /dashboard/top-medicines:
+    get:
+      tags: [Dashboard]
+      summary: Top selling medicines
+      description: Returns top N medicines by quantity sold. Requires `view_dashboard` permission.
+      operationId: topMedicines
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+      responses:
+        "200":
+          description: Top medicines
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Paracetamol 500mg
+                        totalQuantity:
+                          type: integer
+                          example: 156
+                        totalRevenue:
+                          type: number
+                          example: 780.00
+                        category:
+                          type: string
+                          example: Analgesics
+
+  /dashboard/sales-by-staff:
+    get:
+      tags: [Dashboard]
+      summary: Sales by staff
+      description: Returns per-staff sales totals. Requires `view_dashboard` permission.
+      operationId: salesByStaff
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+      responses:
+        "200":
+          description: Sales by staff
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Esi Mensah
+                        totalSales:
+                          type: number
+                          example: 4520.00
+                        profit:
+                          type: number
+                          example: 1808.00
+                        transactionCount:
+                          type: integer
+                          example: 42
+
+  /dashboard/sales-by-category:
+    get:
+      tags: [Dashboard]
+      summary: Sales by category
+      description: Returns revenue and quantity per medicine category. Requires `view_dashboard` permission.
+      operationId: salesByCategory
+      parameters:
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+      responses:
+        "200":
+          description: Sales by category
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category:
+                          type: string
+                          example: Analgesics
+                        totalRevenue:
+                          type: number
+                          example: 1250.00
+                        totalQuantity:
+                          type: integer
+                          example: 89
+
+  /dashboard/inventory-alerts:
+    get:
+      tags: [Dashboard]
+      summary: Inventory alerts
+      description: Returns low stock, expiring soon, and expired batches. Requires `view_dashboard` permission.
+      operationId: inventoryAlerts
+      parameters:
+        - name: threshold
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Inventory alerts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      lowStock:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            currentStock:
+                              type: integer
+                            reorderLevel:
+                              type: integer
+                      expiringSoon:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            medicine:
+                              type: string
+                            batchNumber:
+                              type: string
+                            quantity:
+                              type: integer
+                            expiryDate:
+                              type: string
+                              format: date-time
+                      expired:
+                        type: array
+                        items:
+                          type: object
+
+  /dashboard/recent-activity:
+    get:
+      tags: [Dashboard]
+      summary: Recent activity
+      description: Returns recent audit log entries. Requires `view_dashboard` permission.
+      operationId: recentActivity
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditLog"
+
+  /dashboard/staff:
+    get:
+      tags: [Dashboard]
+      summary: Staff dashboard
+      description: Returns the current staff member's today metrics (sales, transactions, cash, pending refunds, current session). Requires `view_dashboard` permission.
+      operationId: staffDashboard
+      responses:
+        "200":
+          description: Staff dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      todaySales:
+                        type: number
+                        example: 1250.00
+                      todayTransactions:
+                        type: integer
+                        example: 8
+                      todayCashSales:
+                        type: number
+                        example: 850.00
+                      pendingRefunds:
+                        type: integer
+                        example: 1
+                      currentSession:
+                        type: object
+                        nullable: true
+                      todayReport:
+                        type: object
+                        nullable: true
+
+  # ─── Notifications ─────────────────────────────────────
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      description: |
+        Returns notifications for the current user. Managers also see role-targeted notifications.
+      operationId: listNotifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: string
+            enum: ["true", "false"]
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [low_stock, expiring_medicine, sale, refund, daily_report, security, system]
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Get unread notification count
+      description: Returns the count of unread notifications.
+      operationId: getUnreadCount
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        example: 3
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification as read
+      description: Marks a single notification as read.
+      operationId: markAsRead
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/Notification"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      description: Marks all unread notifications for the current user as read.
+      operationId: markAllAsRead
+      responses:
+        "200":
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: All notifications marked as read
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ─── Settings ──────────────────────────────────────────
+  /settings:
+    get:
+      tags: [Settings]
+      summary: Get all settings
+      description: Returns all pharmacy, inventory, sales, and security settings. Requires `manage_settings` permission.
+      operationId: getAllSettings
+      responses:
+        "200":
+          description: All settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      pharmacy:
+                        $ref: "#/components/schemas/PharmacyInfo"
+                      inventory:
+                        $ref: "#/components/schemas/InventorySettings"
+                      sales:
+                        $ref: "#/components/schemas/SalesSettings"
+                      security:
+                        $ref: "#/components/schemas/SecuritySettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /settings/pharmacy:
+    get:
+      tags: [Settings]
+      summary: Get pharmacy info
+      description: Returns pharmacy business information. Requires `manage_settings` permission.
+      operationId: getPharmacyInfo
+      responses:
+        "200":
+          description: Pharmacy info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/PharmacyInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Settings]
+      summary: Update pharmacy info
+      description: Updates pharmacy business information. Requires `manage_settings` permission.
+      operationId: updatePharmacyInfo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Adom Pharmacy
+                registrationNumber:
+                  type: string
+                  example: "PH-2024-001"
+                phone:
+                  type: string
+                  example: "+233 30 200 1234"
+                email:
+                  type: string
+                  example: info@adompharmacy.gh
+                address:
+                  type: string
+                  example: "123 Liberation Road"
+                city:
+                  type: string
+                  example: Accra
+                region:
+                  type: string
+                  example: Greater Accra
+                country:
+                  type: string
+                  example: Ghana
+                currency:
+                  type: string
+                  example: GHS
+                timezone:
+                  type: string
+                  example: Africa/Accra
+      responses:
+        "200":
+          description: Pharmacy info updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/PharmacyInfo"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /settings/inventory:
+    get:
+      tags: [Settings]
+      summary: Get inventory settings
+      description: Returns inventory-related settings. Requires `manage_settings` permission.
+      operationId: getInventorySettings
+      responses:
+        "200":
+          description: Inventory settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/InventorySettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Settings]
+      summary: Update inventory settings
+      description: Updates inventory-related settings. Requires `manage_settings` permission.
+      operationId: updateInventorySettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventorySettings"
+      responses:
+        "200":
+          description: Inventory settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/InventorySettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /settings/sales:
+    get:
+      tags: [Settings]
+      summary: Get sales settings
+      description: Returns sales-related settings. Requires `manage_settings` permission.
+      operationId: getSalesSettings
+      responses:
+        "200":
+          description: Sales settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SalesSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Settings]
+      summary: Update sales settings
+      description: Updates sales-related settings. Requires `manage_settings` permission.
+      operationId: updateSalesSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SalesSettings"
+      responses:
+        "200":
+          description: Sales settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SalesSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /settings/security:
+    get:
+      tags: [Settings]
+      summary: Get security settings
+      description: Returns security-related settings. Requires `manage_settings` permission.
+      operationId: getSecuritySettings
+      responses:
+        "200":
+          description: Security settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SecuritySettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Settings]
+      summary: Update security settings
+      description: Updates security-related settings. Requires `manage_settings` permission.
+      operationId: updateSecuritySettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecuritySettings"
+      responses:
+        "200":
+          description: Security settings updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/SecuritySettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ─── Audit ─────────────────────────────────────────────
+  /audit:
+    get:
+      tags: [Audit]
+      summary: List audit logs
+      description: Returns audit logs with filtering and pagination. Requires `view_audit_logs` permission.
+      operationId: listAuditLogs
+      parameters:
+        - name: user
+          in: query
+          schema:
+            type: string
+          description: Filter by user ID
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filter by action type (e.g. SALE_CREATED, USER_LOGIN)
+        - name: module
+          in: query
+          schema:
+            type: string
+          description: Filter by module (e.g. sales, auth, medicines)
+        - name: entity
+          in: query
+          schema:
+            type: string
+          description: Filter by entity type
+        - $ref: "#/components/parameters/DateFrom"
+        - $ref: "#/components/parameters/DateTo"
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by description
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditLog"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationMeta"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /audit/{id}:
+    get:
+      tags: [Audit]
+      summary: Get audit log detail
+      description: Returns a single audit log entry. Requires `view_audit_logs` permission.
+      operationId: getAuditLogById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Audit log detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/AuditLog"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ─── Profile ───────────────────────────────────────────
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get own profile
+      description: Returns the authenticated user's full profile.
+      operationId: getProfile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      tags: [Profile]
+      summary: Update own profile
+      description: Updates the authenticated user's name, email, or phone.
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Nana Adjei
+                email:
+                  type: string
+                  example: nana@adompharmacy.gh
+                phone:
+                  type: string
+                  example: "+233241234567"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /profile/password:
+    put:
+      tags: [Profile]
+      summary: Change password
+      description: Changes the authenticated user's password. Invalidates all refresh tokens.
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                  example: OldPass123!
+                newPassword:
+                  type: string
+                  minLength: 6
+                  example: NewPass456!
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password changed successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+# ═══════════════════════════════════════════════════════════
+# Components
+# ═══════════════════════════════════════════════════════════
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT access token obtained from POST /auth/login"
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: User ID
+    MedicineId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Medicine ID
+    SaleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Sale ID
+    DateFrom:
+      name: from
+      in: query
+      schema:
+        type: string
+        format: date
+      description: Start date (ISO 8601)
+    DateTo:
+      name: to
+      in: query
+      schema:
+        type: string
+        format: date
+      description: End date (ISO 8601)
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+      description: Page number
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 50
+        minimum: 1
+        maximum: 200
+      description: Items per page
+
+  schemas:
+    # ── Auth ──
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: owner@adompharmacy.gh
+        password:
+          type: string
+          example: Owner123!
+
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIs...
+            refreshToken:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIs...
+            user:
+              $ref: "#/components/schemas/UserProfile"
+
+    # ── User ──
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          example: Nana Adjei (Owner)
+        email:
+          type: string
+          example: owner@adompharmacy.gh
+        phone:
+          type: string
+          example: "+233241234567"
+        role:
+          type: string
+          enum: [owner, branch_manager, pharmacist, cashier, inventory_officer, auditor]
+          example: owner
+        permissions:
+          type: array
+          items:
+            type: string
+          example: [view_dashboard, manage_users, manage_medicines]
+        branch:
+          type: string
+          example: Main Branch
+        isActive:
+          type: boolean
+          example: true
+        lastLoginAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          example: Nana Adjei (Owner)
+        email:
+          type: string
+          example: owner@adompharmacy.gh
+        phone:
+          type: string
+          example: "+233241234567"
+        role:
+          type: string
+          example: owner
+        permissions:
+          type: array
+          items:
+            type: string
+        branch:
+          type: string
+          example: Main Branch
+        lastLoginAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Kwame Osei
+        email:
+          type: string
+          format: email
+          example: kwame@adompharmacy.gh
+        password:
+          type: string
+          minLength: 6
+          example: Pharma123!
+        role:
+          type: string
+          enum: [owner, branch_manager, pharmacist, cashier, inventory_officer, auditor]
+          example: pharmacist
+        branch:
+          type: string
+          example: Main Branch
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Kwame Osei
+        email:
+          type: string
+          format: email
+          example: kwame@adompharmacy.gh
+        role:
+          type: string
+          enum: [owner, branch_manager, pharmacist, cashier, inventory_officer, auditor]
+        branch:
+          type: string
+          example: Main Branch
+        isActive:
+          type: boolean
+
+    # ── Medicine ──
+    Medicine:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439020"
+        name:
+          type: string
+          example: Paracetamol 500mg
+        genericName:
+          type: string
+          example: Acetaminophen
+        brand:
+          type: string
+          example: Emzor
+        category:
+          type: string
+          description: Category ID
+          example: "507f1f77bcf86cd799439015"
+        manufacturer:
+          type: string
+          example: Emzor Pharmaceutical
+        dosage:
+          type: string
+          example: "500mg"
+        strength:
+          type: string
+          example: "500mg"
+        form:
+          type: string
+          example: Tablet
+        barcode:
+          type: string
+          example: "890123001001"
+        sku:
+          type: string
+          example: SKU-0001
+        prescriptionRequired:
+          type: boolean
+          example: false
+        purchasePrice:
+          type: number
+          format: float
+          example: 3.00
+        sellingPrice:
+          type: number
+          format: float
+          example: 5.00
+        minStock:
+          type: integer
+          example: 10
+        maxStock:
+          type: integer
+          example: 500
+        reorderLevel:
+          type: integer
+          example: 25
+        status:
+          type: string
+          enum: [active, discontinued]
+          example: active
+        supplier:
+          type: string
+          description: Supplier ID
+          example: "507f1f77bcf86cd799439018"
+        createdAt:
+          type: string
+          format: date-time
+
+    MedicineWithStock:
+      allOf:
+        - $ref: "#/components/schemas/Medicine"
+        - type: object
+          properties:
+            totalStock:
+              type: integer
+              example: 120
+            batchCount:
+              type: integer
+              example: 3
+
+    CreateMedicineRequest:
+      type: object
+      required: [name, category, sku, purchasePrice, sellingPrice]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Paracetamol 500mg
+        genericName:
+          type: string
+          example: Acetaminophen
+        brand:
+          type: string
+          example: Emzor
+        category:
+          type: string
+          description: Category ID
+          example: "507f1f77bcf86cd799439015"
+        manufacturer:
+          type: string
+          example: Emzor Pharmaceutical
+        dosage:
+          type: string
+          example: "500mg"
+        strength:
+          type: string
+          example: "500mg"
+        form:
+          type: string
+          example: Tablet
+        barcode:
+          type: string
+          example: "890123001001"
+        sku:
+          type: string
+          example: SKU-0067
+        prescriptionRequired:
+          type: boolean
+          default: false
+        description:
+          type: string
+        supplier:
+          type: string
+          description: Supplier ID
+        purchasePrice:
+          type: number
+          format: float
+          example: 3.00
+        sellingPrice:
+          type: number
+          format: float
+          example: 5.00
+        minStock:
+          type: integer
+          default: 10
+        maxStock:
+          type: integer
+          default: 500
+        reorderLevel:
+          type: integer
+          default: 25
+
+    UpdateMedicineRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        genericName:
+          type: string
+        brand:
+          type: string
+        category:
+          type: string
+        manufacturer:
+          type: string
+        dosage:
+          type: string
+        strength:
+          type: string
+        form:
+          type: string
+        barcode:
+          type: string
+        sku:
+          type: string
+        prescriptionRequired:
+          type: boolean
+        description:
+          type: string
+        purchasePrice:
+          type: number
+          format: float
+        sellingPrice:
+          type: number
+          format: float
+        minStock:
+          type: integer
+        maxStock:
+          type: integer
+        reorderLevel:
+          type: integer
+
+    MedicineBatch:
+      type: object
+      properties:
+        _id:
+          type: string
+        medicine:
+          type: string
+          description: Medicine ID
+        batchNumber:
+          type: string
+          example: B-SKU-0001-1
+        quantity:
+          type: integer
+          example: 100
+        purchasePrice:
+          type: number
+          format: float
+          example: 3.00
+        sellingPrice:
+          type: number
+          format: float
+          example: 5.00
+        manufacturingDate:
+          type: string
+          format: date
+        expiryDate:
+          type: string
+          format: date
+          example: "2027-06-15"
+        supplier:
+          type: string
+        dateReceived:
+          type: string
+          format: date-time
+
+    ReceiveStockRequest:
+      type: object
+      required: [medicine, batchNumber, quantity, purchasePrice, sellingPrice, expiryDate]
+      properties:
+        medicine:
+          type: string
+          description: Medicine ID
+          example: "507f1f77bcf86cd799439020"
+        batchNumber:
+          type: string
+          example: B-SKU-0001-1
+        quantity:
+          type: integer
+          minimum: 1
+          example: 100
+        purchasePrice:
+          type: number
+          format: float
+          example: 3.00
+        sellingPrice:
+          type: number
+          format: float
+          example: 5.00
+        expiryDate:
+          type: string
+          format: date
+          example: "2027-06-15"
+        manufacturingDate:
+          type: string
+          format: date
+          example: "2026-01-15"
+        supplier:
+          type: string
+          description: Supplier ID
+
+    AdjustStockRequest:
+      type: object
+      required: [batch, quantityChange, reason]
+      properties:
+        batch:
+          type: string
+          description: MedicineBatch ID
+        quantityChange:
+          type: integer
+          description: "Positive to add, negative to subtract"
+          example: -5
+        reason:
+          type: string
+          example: Expired items removed from shelf
+
+    # ── Sale ──
+    Sale:
+      type: object
+      properties:
+        _id:
+          type: string
+        transactionNumber:
+          type: string
+          example: "INV-20260908-0001"
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              medicine:
+                type: string
+              batch:
+                type: string
+              name:
+                type: string
+                example: Paracetamol 500mg
+              quantity:
+                type: integer
+                example: 2
+              unitPrice:
+                type: number
+                format: float
+                example: 5.00
+              discount:
+                type: number
+                format: float
+                example: 0
+              subtotal:
+                type: number
+                format: float
+                example: 10.00
+        customer:
+          type: string
+          nullable: true
+        cashier:
+          type: string
+        branch:
+          type: string
+          example: Main Branch
+        subtotal:
+          type: number
+          format: float
+          example: 10.00
+        discount:
+          type: number
+          format: float
+          example: 0
+        tax:
+          type: number
+          format: float
+          example: 0
+        total:
+          type: number
+          format: float
+          example: 10.00
+        costOfGoods:
+          type: number
+          format: float
+          example: 6.00
+        payments:
+          type: array
+          items:
+            type: object
+            properties:
+              method:
+                type: string
+                enum: [cash, mobile_money, card, bank_transfer, other]
+                example: cash
+              amount:
+                type: number
+                format: float
+                example: 10.00
+              reference:
+                type: string
+                nullable: true
+              date:
+                type: string
+                format: date-time
+        paymentMethod:
+          type: string
+          example: cash
+        amountReceived:
+          type: number
+          format: float
+          example: 20.00
+        change:
+          type: number
+          format: float
+          example: 10.00
+        status:
+          type: string
+          enum: [completed, partially_refunded, refunded, voided, held]
+          example: completed
+        refundReason:
+          type: string
+          nullable: true
+        refundedAmount:
+          type: number
+          format: float
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateSaleRequest:
+      type: object
+      required: [items, payments]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [medicine, quantity]
+            properties:
+              medicine:
+                type: string
+                description: Medicine ID
+              quantity:
+                type: integer
+                minimum: 1
+                example: 2
+              discount:
+                type: number
+                format: float
+                minimum: 0
+                default: 0
+        customer:
+          type: string
+          description: Customer ID (optional)
+        payments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [method, amount]
+            properties:
+              method:
+                type: string
+                enum: [cash, mobile_money, card, bank_transfer, other]
+              amount:
+                type: number
+                format: float
+                minimum: 0.01
+                example: 10.00
+              reference:
+                type: string
+                description: Mobile money or card reference
+        amountReceived:
+          type: number
+          format: float
+          description: Total cash received (for change calculation)
+          example: 20.00
+        tax:
+          type: number
+          format: float
+          minimum: 0
+          default: 0
+        discount:
+          type: number
+          format: float
+          minimum: 0
+          default: 0
+        holdId:
+          type: string
+          description: If resuming a held sale, provide its ID
+
+    HoldSaleRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [medicine, quantity]
+            properties:
+              medicine:
+                type: string
+              quantity:
+                type: integer
+                minimum: 1
+              discount:
+                type: number
+                format: float
+                default: 0
+        customer:
+          type: string
+        discount:
+          type: number
+          format: float
+          default: 0
+        tax:
+          type: number
+          format: float
+          default: 0
+
+    ResumeSaleRequest:
+      type: object
+      required: [payments]
+      properties:
+        payments:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [method, amount]
+            properties:
+              method:
+                type: string
+                enum: [cash, mobile_money, card, bank_transfer, other]
+              amount:
+                type: number
+                format: float
+              reference:
+                type: string
+        amountReceived:
+          type: number
+          format: float
+
+    RefundRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [medicine, batch, returnQuantity, condition, reason]
+            properties:
+              medicine:
+                type: string
+                description: Medicine ID
+              batch:
+                type: string
+                description: MedicineBatch ID
+              returnQuantity:
+                type: integer
+                minimum: 1
+                example: 1
+              condition:
+                type: string
+                enum: [resaleable, damaged]
+              reason:
+                type: string
+                minLength: 1
+                example: Customer changed mind
+
+    SaleReturn:
+      type: object
+      properties:
+        _id:
+          type: string
+        sale:
+          type: string
+          description: Original Sale ID
+        transactionNumber:
+          type: string
+          example: "RET-20260908-0001"
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              medicine:
+                type: string
+              batch:
+                type: string
+              name:
+                type: string
+                example: Paracetamol 500mg
+              originalQuantity:
+                type: integer
+              returnQuantity:
+                type: integer
+                example: 1
+              unitPrice:
+                type: number
+                format: float
+                example: 5.00
+              subtotal:
+                type: number
+                format: float
+                example: 5.00
+              condition:
+                type: string
+                enum: [resaleable, damaged]
+              reason:
+                type: string
+        refundAmount:
+          type: number
+          format: float
+          example: 5.00
+        status:
+          type: string
+          enum: [pending, approved, rejected, completed]
+          example: pending
+        requestedBy:
+          type: string
+        approvedBy:
+          type: string
+          nullable: true
+        rejectionReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    Receipt:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Adom Pharmacy
+        address:
+          type: string
+          example: "123 Liberation Road, Accra, Ghana"
+        phone:
+          type: string
+          example: "+233 30 200 1234"
+        receipt:
+          type: string
+          example: "INV-20260908-0001"
+        date:
+          type: string
+          format: date-time
+        cashier:
+          type: string
+          example: Esi Mensah
+        customer:
+          type: string
+          nullable: true
+          example: Ama Owusu
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: integer
+              unitPrice:
+                type: number
+              discount:
+                type: number
+              subtotal:
+                type: number
+        subtotal:
+          type: number
+        discount:
+          type: number
+        tax:
+          type: number
+        total:
+          type: number
+        payments:
+          type: array
+          items:
+            type: object
+            properties:
+              method:
+                type: string
+              amount:
+                type: number
+              reference:
+                type: string
+                nullable: true
+        paymentMethod:
+          type: string
+        amountReceived:
+          type: number
+        change:
+          type: number
+        status:
+          type: string
+
+    # ── Customer ──
+    Customer:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+          example: Ama Owusu
+        phone:
+          type: string
+          example: "0241234567"
+        outstandingBalance:
+          type: number
+          format: float
+          example: 0
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCustomerRequest:
+      type: object
+      required: [name, phone]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Ama Owusu
+        phone:
+          type: string
+          minLength: 5
+          example: "0241234567"
+        notes:
+          type: string
+          example: Prefers SMS notifications
+
+    # ── Expense ──
+    Expense:
+      type: object
+      properties:
+        _id:
+          type: string
+        category:
+          type: string
+          enum: [rent, utilities, salaries, transport, supplier_payment, maintenance, marketing, insurance, taxes, misc]
+          example: utilities
+        description:
+          type: string
+          example: Monthly electricity bill
+        amount:
+          type: number
+          format: float
+          example: 850.00
+        paymentMethod:
+          type: string
+          enum: [cash, mobile_money, card, bank_transfer, other]
+          example: mobile_money
+        recordedBy:
+          type: string
+          description: User ID
+        approvedBy:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: pending
+        rejectionReason:
+          type: string
+          nullable: true
+        receiptUrl:
+          type: string
+          nullable: true
+          example: /uploads/receipts/receipt-1694000000.pdf
+        date:
+          type: string
+          format: date
+          example: "2026-09-01"
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Notification ──
+    Notification:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+          example: Low stock alert
+        message:
+          type: string
+          example: Coartem 20/120mg is running low (5 units remaining)
+        priority:
+          type: string
+          enum: [info, warning, critical]
+          example: warning
+        category:
+          type: string
+          enum: [low_stock, expiring_medicine, sale, refund, daily_report, security, system]
+          example: low_stock
+        user:
+          type: string
+          nullable: true
+        isRead:
+          type: boolean
+          example: false
+        targetRoles:
+          type: array
+          items:
+            type: string
+          example: [owner, branch_manager]
+        referenceId:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Daily Session ──
+    DailySession:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        date:
+          type: string
+          format: date-time
+        openingCash:
+          type: number
+          format: float
+          example: 500.00
+        status:
+          type: string
+          enum: [open, closed]
+          example: open
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        closeAggregates:
+          type: object
+          nullable: true
+          properties:
+            totalSales:
+              type: number
+              example: 2450.00
+            cashSales:
+              type: number
+              example: 1800.00
+            mobileMoneySales:
+              type: number
+              example: 450.00
+            cardSales:
+              type: number
+              example: 200.00
+            bankTransferSales:
+              type: number
+              example: 0
+            refunds:
+              type: number
+              example: 50.00
+            cashRefunds:
+              type: number
+              example: 50.00
+            discounts:
+              type: number
+              example: 25.00
+            expenses:
+              type: number
+              example: 150.00
+            cashExpenses:
+              type: number
+              example: 100.00
+            expectedCash:
+              type: number
+              example: 2150.00
+            actualCash:
+              type: number
+              example: 2148.50
+            variance:
+              type: number
+              example: -1.50
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Daily Report ──
+    DailyReport:
+      type: object
+      properties:
+        _id:
+          type: string
+        session:
+          type: string
+        user:
+          type: string
+        date:
+          type: string
+          format: date-time
+        totalSales:
+          type: number
+          format: float
+          example: 2450.00
+        cashSales:
+          type: number
+          format: float
+          example: 1800.00
+        mobileMoneySales:
+          type: number
+          format: float
+          example: 450.00
+        cardSales:
+          type: number
+          format: float
+          example: 200.00
+        bankTransferSales:
+          type: number
+          format: float
+          example: 0
+        refunds:
+          type: number
+          format: float
+          example: 50.00
+        cashRefunds:
+          type: number
+          format: float
+          example: 50.00
+        discounts:
+          type: number
+          format: float
+          example: 25.00
+        expenses:
+          type: number
+          format: float
+          example: 150.00
+        cashExpenses:
+          type: number
+          format: float
+          example: 100.00
+        expectedCash:
+          type: number
+          format: float
+          example: 2150.00
+        actualCash:
+          type: number
+          format: float
+          example: 2148.50
+        variance:
+          type: number
+          format: float
+          example: -1.50
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, submitted, approved, rejected]
+          example: submitted
+        reviewedBy:
+          type: string
+          nullable: true
+        reviewNotes:
+          type: string
+          nullable: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Settings ──
+    PharmacyInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          example: Adom Pharmacy
+        registrationNumber:
+          type: string
+          example: "PH-2024-001"
+        phone:
+          type: string
+          example: "+233 30 200 1234"
+        email:
+          type: string
+          example: info@adompharmacy.gh
+        address:
+          type: string
+          example: "123 Liberation Road"
+        city:
+          type: string
+          example: Accra
+        region:
+          type: string
+          example: Greater Accra
+        country:
+          type: string
+          example: Ghana
+        logoUrl:
+          type: string
+          nullable: true
+        currency:
+          type: string
+          example: GHS
+        timezone:
+          type: string
+          example: Africa/Accra
+
+    InventorySettings:
+      type: object
+      properties:
+        lowStockThreshold:
+          type: integer
+          example: 10
+        expiryWarningDays:
+          type: integer
+          example: 30
+        allowNegativeStock:
+          type: boolean
+          example: false
+        requireManagerApprovalForStockAdjustment:
+          type: boolean
+          example: true
+
+    SalesSettings:
+      type: object
+      properties:
+        requireManagerApprovalForRefund:
+          type: boolean
+          example: true
+        discountAuthorizationRequired:
+          type: boolean
+          example: true
+        receiptFooter:
+          type: string
+          example: Thank you for choosing Adom Pharmacy
+        taxRate:
+          type: number
+          format: float
+          example: 0
+        taxEnabled:
+          type: boolean
+          example: false
+
+    SecuritySettings:
+      type: object
+      properties:
+        minPasswordLength:
+          type: integer
+          example: 6
+        sessionExpirationMinutes:
+          type: integer
+          example: 60
+        maxLoginAttempts:
+          type: integer
+          example: 5
+        lockoutDurationMinutes:
+          type: integer
+          example: 15
+
+    # ── Audit ──
+    AuditLog:
+      type: object
+      properties:
+        _id:
+          type: string
+        user:
+          type: string
+        userName:
+          type: string
+          example: Nana Adjei (Owner)
+        action:
+          type: string
+          example: SALE_CREATED
+        module:
+          type: string
+          example: sales
+        entity:
+          type: string
+          nullable: true
+          example: Sale
+        entityId:
+          type: string
+          nullable: true
+        description:
+          type: string
+          example: Nana Adjei (Owner) sold 2 x Paracetamol 500mg — GHS 10.00
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Dashboard ──
+    DashboardSummary:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+          format: float
+          example: 12500.00
+        transactionCount:
+          type: integer
+          example: 85
+        grossProfit:
+          type: number
+          format: float
+          example: 5000.00
+        netProfit:
+          type: number
+          format: float
+          example: 4200.00
+        cashTotal:
+          type: number
+          format: float
+          example: 8000.00
+        mobileMoneyTotal:
+          type: number
+          format: float
+          example: 3000.00
+        cardTotal:
+          type: number
+          format: float
+          example: 1500.00
+        bankTransferTotal:
+          type: number
+          format: float
+          example: 0
+        otherTotal:
+          type: number
+          format: float
+          example: 0
+        totalDiscount:
+          type: number
+          format: float
+          example: 150.00
+        totalTax:
+          type: number
+          format: float
+          example: 0
+        cashReceived:
+          type: number
+          format: float
+          example: 8200.00
+        cashChange:
+          type: number
+          format: float
+          example: 200.00
+        totalExpenses:
+          type: number
+          format: float
+          example: 800.00
+        cashExpenses:
+          type: number
+          format: float
+          example: 500.00
+        inventoryValue:
+          type: number
+          format: float
+          example: 45000.00
+        lowStockCount:
+          type: integer
+          example: 5
+        totalMedicines:
+          type: integer
+          example: 66
+        expiringSoon:
+          type: integer
+          example: 8
+        expired:
+          type: integer
+          example: 2
+        activeStaff:
+          type: integer
+          example: 6
+        openSessions:
+          type: integer
+          example: 2
+        dateRange:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+
+    # ── Common ──
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Resource not found
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: API is healthy
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              example: healthy
+            database:
+              type: string
+              example: connected
+            version:
+              type: string
+              example: "1.0.0"
+            uptime:
+              type: integer
+              example: 3600
+            timestamp:
+              type: string
+              format: date-time
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 50
+        total:
+          type: integer
+          example: 150
+
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            type: object
+        summary:
+          type: object
+          nullable: true
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
+  responses:
+    BadRequest:
+      description: Bad request / validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict (duplicate, already exists)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
