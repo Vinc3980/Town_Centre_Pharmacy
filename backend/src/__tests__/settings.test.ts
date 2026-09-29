@@ -67,6 +67,64 @@ describe("Settings API", () => {
       expect(audit!.before).toBeTruthy();
       expect(audit!.after).toBeTruthy();
     });
+
+    it("PUT accepts a fresh-database payload (empty text fields, null logoUrl)", async () => {
+      const res = await request(app)
+        .put("/api/v1/settings/pharmacy")
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({
+          name: "Adom Pharmacy",
+          registrationNumber: "PH-001",
+          phone: "",
+          email: "",
+          address: "",
+          city: "",
+          region: "",
+          country: "Ghana",
+          logoUrl: null,
+          currency: "GHS",
+          timezone: "Africa/Accra",
+          branches: ["Main Branch"],
+          paymentMethods: ["Cash", "Mobile Money", "Card", "Credit"],
+        });
+      expect(res.status).toBe(200);
+      expect(res.body.phone).toBe("");
+      expect(res.body.email).toBe("");
+      expect(res.body.address).toBe("");
+      expect(res.body.logoUrl).toBeNull();
+      expect(res.body.name).toBe("Adom Pharmacy");
+    });
+
+    it("PUT clears an optional text field back to empty", async () => {
+      await request(app)
+        .put("/api/v1/settings/pharmacy")
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ phone: "+233 30 200 5678" })
+        .expect(200);
+
+      const res = await request(app)
+        .put("/api/v1/settings/pharmacy")
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ phone: "" });
+      expect(res.status).toBe(200);
+      expect(res.body.phone).toBe("");
+    });
+
+    it("PUT rejects an invalid email but still allows empty", async () => {
+      const bad = await request(app)
+        .put("/api/v1/settings/pharmacy")
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ email: "not-an-email" });
+      expect(bad.status).toBe(400);
+      expect(bad.body.message).toBe("Validation failed");
+
+      const ok = await request(app)
+        .put("/api/v1/settings/pharmacy")
+        .set("Authorization", `Bearer ${ownerToken}`)
+        .send({ email: "" });
+      expect(ok.status).toBe(200);
+      expect(ok.body.email).toBe("");
+    });
   });
 
   describe("Inventory settings", () => {

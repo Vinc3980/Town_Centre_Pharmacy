@@ -8,18 +8,22 @@ import { recordAudit } from "../services/auditService";
 import { ApiError } from "../utils/ApiError";
 import { asyncHandler } from "../utils/asyncHandler";
 
+// Optional text fields accept "" so forms can round-trip empty values
+// (columns are NOT NULL; a fresh database seeds them as "").
+const optionalText = z.string().min(2).optional().or(z.literal(""));
+
 const updatePharmacyInfoSchema = z.object({
   name: z.string().min(2).optional(),
   registrationNumber: z.string().min(2).optional(),
-  phone: z.string().min(2).optional(),
-  email: z.string().email().optional(),
-  address: z.string().min(2).optional(),
-  city: z.string().min(2).optional(),
-  region: z.string().min(2).optional(),
-  country: z.string().min(2).optional(),
-  logoUrl: z.string().optional(),
-  currency: z.string().min(2).optional(),
-  timezone: z.string().min(2).optional(),
+  phone: optionalText,
+  email: z.string().email().optional().or(z.literal("")),
+  address: optionalText,
+  city: optionalText,
+  region: optionalText,
+  country: optionalText,
+  logoUrl: z.string().nullable().optional(),
+  currency: optionalText,
+  timezone: optionalText,
   branches: z.array(z.string()).optional(),
   paymentMethods: z.array(z.string()).optional(),
 });
