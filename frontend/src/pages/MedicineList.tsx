@@ -73,6 +73,8 @@ const EMPTY_FORM: Record<string, unknown> = {
   minStock: 10,
   maxStock: 500,
   reorderLevel: 20,
+  quantity: "",
+  expiryDate: "",
 };
 
 const EMPTY_STOCK: Record<string, unknown> = {
@@ -418,6 +420,19 @@ export default function MedicineList() {
     payload.minStock = Number(formData.minStock) || 10;
     payload.maxStock = Number(formData.maxStock) || 500;
     payload.reorderLevel = Number(formData.reorderLevel) || 20;
+
+    if (!editingMedicine) {
+      const qty = Number(formData.quantity) || 0;
+      if (qty > 0) {
+        const exp = String(formData.expiryDate || "").trim();
+        if (!exp) {
+          setToast({ message: "Expiry date is required when an initial quantity is provided", type: "error" });
+          return;
+        }
+        payload.quantity = Math.floor(qty);
+        payload.expiryDate = exp;
+      }
+    }
 
     if (editingMedicine) {
       updateMutation.mutate({ id: editingMedicine._id, payload });
@@ -869,6 +884,33 @@ export default function MedicineList() {
                 />
               </div>
             </div>
+            {!editingMedicine && (
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray mb-1">Initial Quantity</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={String(formData.quantity ?? "")}
+                    onChange={(e) => setFormField("quantity", e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder="e.g. 100"
+                    className="w-full px-3 py-2 rounded-control border border-line text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray mb-1">
+                    Expiry Date
+                    {Number(formData.quantity) > 0 && <span className="text-red"> *</span>}
+                  </label>
+                  <input
+                    type="date"
+                    value={String(formData.expiryDate ?? "")}
+                    onChange={(e) => setFormField("expiryDate", e.target.value)}
+                    className="w-full px-3 py-2 rounded-control border border-line text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Image Upload */}

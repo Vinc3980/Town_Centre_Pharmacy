@@ -5,7 +5,7 @@ import {
   RotateCcw, DollarSign, Clock, BarChart3, Shield, Settings, Menu, X, Users, UserPlus,
   AlertTriangle, Pill, UsersRound, RefreshCw, Search, ChevronDown,
   ArrowDownToLine, ArrowLeftRight, ClipboardCheck, UserCog, Truck, Plus,
-  Gauge, TrendingUp,
+  Gauge, TrendingUp, Building2,
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useAuth } from "../context/AuthContext";
@@ -106,6 +106,7 @@ const NAV_SECTIONS: NavSection[] = [
     roles: ["admin"],
     items: [
       { to: "/users", label: "Users", icon: UserCog, roles: ["admin"] },
+      { to: "/branches", label: "Branches", icon: Building2, roles: ["admin"] },
     ],
   },
   {

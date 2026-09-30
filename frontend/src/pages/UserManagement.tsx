@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Edit2, Trash2, Key, UserCheck, UserX, Shield, Camera } from "lucide-react";
 import { fetchUsers, createUser, updateUser, deactivateUser, reactivateUser, adminResetPassword, uploadStaffImage, CreateUserPayload, UpdateUserPayload } from "../api/users";
+import { fetchBranches } from "../api/branches";
 import { User } from "../types";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -64,6 +65,7 @@ function UserForm({ initial, onSubmit, onCancel, loading }: {
   loading: boolean;
 }) {
   const qc = useQueryClient();
+  const branchesQuery = useQuery({ queryKey: ["branches"], queryFn: fetchBranches });
   const [form, setForm] = useState({
     name: initial?.name ?? "",
     email: initial?.email ?? "",
@@ -84,6 +86,12 @@ function UserForm({ initial, onSubmit, onCancel, loading }: {
     employmentDate: initial?.employmentDate ? initial.employmentDate.split("T")[0] : "",
   });
   const [permissions, setPermissions] = useState<string[]>(initial?.permissions ?? []);
+  const branchOptions = (() => {
+    const names = new Set<string>(["Main Branch"]);
+    (branchesQuery.data ?? []).forEach((b) => names.add(b.name));
+    if (form.branch) names.add(form.branch);
+    return Array.from(names).map((n) => ({ value: n, label: n }));
+  })();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(initial?.profilePicture ?? null);
 
@@ -183,7 +191,7 @@ function UserForm({ initial, onSubmit, onCancel, loading }: {
         <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. John Doe" />
         <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. john@adompharmacy.gh" />
         <Input label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="e.g. 0244-118-800" />
-        <Input label="Branch" value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} />
+        <Select label="Branch" value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} options={branchOptions} />
         <Select label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} options={ROLE_OPTIONS} />
         {!isEdit && (
           <Input label="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} hint="Minimum 6 characters" />

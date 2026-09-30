@@ -125,6 +125,59 @@ describe("POST /api/v1/medicines", () => {
 
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
+
+  it("creates an initial batch when quantity is provided", async () => {
+    const res = await request(app)
+      .post("/api/v1/medicines")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        name: "Amoxicillin 250mg",
+        category: categoryId,
+        sku: "MED-QTY-001",
+        purchasePrice: 4,
+        sellingPrice: 8,
+        quantity: 25,
+        expiryDate: "2027-12-31",
+      });
+
+    expect(res.status).toBe(201);
+
+    const med = await prisma.medicine.findFirst({
+      where: { sku: "MED-QTY-001" },
+      include: { batches: true },
+    });
+    expect(med).toBeTruthy();
+    expect(med!.batches).toHaveLength(1);
+    expect(med!.batches[0].quantity).toBe(25);
+    expect(med!.batches[0].batchNumber).toBe("INIT-MED-QTY-001");
+
+    const movement = await prisma.inventoryMovement.findFirst({
+      where: { medicineId: med!.id },
+    });
+    expect(movement).toBeTruthy();
+    expect(movement!.quantityChange).toBe(25);
+    expect(movement!.type).toBe("receive");
+  });
+
+  it("rejects initial quantity without an expiry date", async () => {
+    const res = await request(app)
+      .post("/api/v1/medicines")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        name: "No Expiry Medicine",
+        category: categoryId,
+        sku: "MED-QTY-002",
+        purchasePrice: 4,
+        sellingPrice: 8,
+        quantity: 10,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toMatch(/expiry date/i);
+
+    const med = await prisma.medicine.findFirst({ where: { sku: "MED-QTY-002" } });
+    expect(med).toBeNull();
+  });
 });
 
 describe("PUT /api/v1/medicines/:id", () => {

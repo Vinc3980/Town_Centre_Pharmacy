@@ -2,6 +2,7 @@ import { Router } from "express";
 import activityRoutes from "./activityRoutes";
 import auditRoutes from "./auditRoutes";
 import authRoutes from "./authRoutes";
+import branchRoutes from "./branchRoutes";
 import categoryRoutes from "./categoryRoutes";
 import customerRoutes from "./customerRoutes";
 import dailyRoutes from "./dailyRoutes";
@@ -23,6 +24,7 @@ const router = Router();
 
 router.use("/health", healthRoutes);
 router.use("/auth", authRoutes);
+router.use("/branches", branchRoutes);
 router.use("/categories", categoryRoutes);
 router.use("/medicines", medicineRoutes);
 router.use("/sales", saleRoutes);

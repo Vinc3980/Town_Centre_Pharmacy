@@ -67,7 +67,7 @@ type PharmacyWithSettings = Omit<Prisma.PharmacyGetPayload<{ include: { settings
   settings: PharmacySettings;
 };
 
-async function getPharmacy(): Promise<PharmacyWithSettings> {
+export async function getPharmacy(): Promise<PharmacyWithSettings> {
   const pharmacy = await prisma.pharmacy.findFirst({ include: { settings: true } });
   if (pharmacy?.settings) return pharmacy as PharmacyWithSettings;
   if (pharmacy) {

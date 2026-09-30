@@ -28,6 +28,7 @@ const StockAdjustment = React.lazy(() => import("./pages/StockAdjustment"));
 const PurchaseOrders = React.lazy(() => import("./pages/PurchaseOrders"));
 const StaffPerformance = React.lazy(() => import("./pages/StaffPerformance"));
 const BusinessOverview = React.lazy(() => import("./pages/BusinessOverview"));
+const Branches = React.lazy(() => import("./pages/Branches"));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="audit" element={<Suspense fallback={<LoadingFallback />}><Audit /></Suspense>} />
         <Route path="settings" element={<Suspense fallback={<LoadingFallback />}><Settings /></Suspense>} />
         <Route path="users" element={<Suspense fallback={<LoadingFallback />}><UserManagement /></Suspense>} />
+        <Route path="branches" element={<Suspense fallback={<LoadingFallback />}><Branches /></Suspense>} />
         <Route path="stock-transfer" element={<Suspense fallback={<LoadingFallback />}><StockTransfer /></Suspense>} />
         <Route path="stock-adjustment" element={<Suspense fallback={<LoadingFallback />}><StockAdjustment /></Suspense>} />
         <Route path="purchases" element={<Suspense fallback={<LoadingFallback />}><ExpenseList /></Suspense>} />

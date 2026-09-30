@@ -218,6 +218,11 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
 
   let result;
   try {
+    const cashier = await prisma.user.findUnique({
+      where: { id: req.user!.sub },
+      select: { branch: true },
+    });
+    const saleBranch = cashier?.branch || "Main Branch";
     result = await withOptionalSession(async (tx) => {
     const itemsToDeduct = data.items.map((it) => ({
       medicine: it.medicine, quantity: it.quantity, discount: it.discount ?? 0,
@@ -287,6 +292,7 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
             transactionNumber: `INV-${Date.now()}`,
             customerId: data.customer || undefined,
             cashierId: req.user!.sub,
+            branch: saleBranch,
             subtotal, discount: discountTotal, tax, total, costOfGoods,
             paymentMethod: payments[0]?.method ?? "cash",
             amountReceived, changeAmount: change, outstandingAmount,
@@ -309,6 +315,7 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
           transactionNumber: await nextTransactionNumber(),
           customerId: data.customer || undefined,
           cashierId: req.user!.sub,
+          branch: saleBranch,
           subtotal, discount: discountTotal, tax, total, costOfGoods,
           paymentMethod: payments[0]?.method ?? "cash",
           amountReceived, changeAmount: change, outstandingAmount,
@@ -513,6 +520,10 @@ export const holdSale = asyncHandler(async (req: Request, res: Response) => {
     if (!data.insuranceProvider) throw new ApiError(400, "Insurance provider is required for insurance sales");
     if (!data.policyOrNhisNumber) throw new ApiError(400, "Policy or NHIS number is required for insurance sales");
   }
+  const holdCashier = await prisma.user.findUnique({
+    where: { id: req.user!.sub },
+    select: { branch: true },
+  });
 
   const resolvedItems: {
     medicine: string; batch: string; name: string; quantity: number;
@@ -569,6 +580,7 @@ export const holdSale = asyncHandler(async (req: Request, res: Response) => {
       items: { create: resolvedItems.map((it, seq) => ({ medicineId: it.medicine, batchId: it.batch, name: it.name, quantity: it.quantity, unitPrice: it.unitPrice, discount: it.discount, subtotal: it.subtotal, seq })) },
       customerId: data.customer || undefined,
       cashierId: req.user!.sub,
+      branch: holdCashier?.branch || "Main Branch",
       subtotal, discount: addMoney(discountTotal, saleDiscount), tax, total,
       costOfGoods: 0,
       paymentMethod: "cash",

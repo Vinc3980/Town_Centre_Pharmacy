@@ -119,10 +119,6 @@ export default function Login() {
           <Button type="submit" size="lg" loading={isSubmitting} className="w-full">
             Sign In
           </Button>
-
-          <p className="text-xs text-gray-soft text-center pt-1">
-            Demo: admin@adompharmacy.gh / Admin123! or use Staff ID
-          </p>
         </form>
 
         <p className="text-[10px] text-gray-soft/80 text-center mt-8">

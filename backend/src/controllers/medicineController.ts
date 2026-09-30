@@ -68,16 +68,45 @@ const medicineSchema = z.object({
   minStock: z.number().nonnegative().optional(),
   maxStock: z.number().nonnegative().optional(),
   reorderLevel: z.number().nonnegative().optional(),
+  quantity: z.number().int().nonnegative().optional(),
+  expiryDate: z.coerce.date().optional(),
 });
 
 export const createMedicine = asyncHandler(async (req: Request, res: Response) => {
   const data = medicineSchema.parse(req.body);
-  const { category, supplier, ...rest } = data;
+  const { category, supplier, quantity, expiryDate, ...rest } = data;
+  if (quantity && quantity > 0 && !expiryDate) {
+    throw new ApiError(400, "Expiry date is required when an initial quantity is provided");
+  }
   const existing = await prisma.medicine.findFirst({ where: { sku: data.sku } });
   if (existing) throw new ApiError(409, "A medicine with this SKU already exists");
   const medicine = await prisma.medicine.create({
     data: { ...rest, categoryId: category, supplierId: supplier },
   });
+
+  if (quantity && quantity > 0 && expiryDate) {
+    const batch = await prisma.medicineBatch.create({
+      data: {
+        medicineId: medicine.id,
+        batchNumber: `INIT-${medicine.sku}`,
+        quantity,
+        purchasePrice: medicine.purchasePrice,
+        sellingPrice: medicine.sellingPrice,
+        expiryDate,
+      },
+    });
+    await prisma.inventoryMovement.create({
+      data: {
+        medicineId: medicine.id,
+        batchId: batch.id,
+        type: "receive",
+        quantityChange: quantity,
+        reason: "Initial stock on product creation",
+        performedById: req.user!.sub,
+      },
+    });
+  }
+
   await recordAudit({
     req, action: "MEDICINE_CREATED", module: "medicines",
     description: `${req.user!.name} added new medicine "${medicine.name}"`, entity: "Medicine", entityId: medicine.id, after: data,
