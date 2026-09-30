@@ -4,17 +4,17 @@ import { ArrowLeft, Mail, CheckCircle, Pill } from "lucide-react";
 import { requestPasswordReset } from "../api/users";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
+import Modal from "../components/ui/Modal";
 import Toast from "../components/ui/Toast";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
+  const sendRequest = async () => {
     setLoading(true);
     try {
       await requestPasswordReset(email);
@@ -23,7 +23,14 @@ export default function ForgotPassword() {
       setToast({ message: (err as { response?: { data?: { message?: string } } }).response?.data?.message || "Something went wrong", type: "error" });
     } finally {
       setLoading(false);
+      setShowConfirm(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setShowConfirm(true);
   };
 
   return (
@@ -55,7 +62,8 @@ export default function ForgotPassword() {
             </div>
             <h1 className="text-2xl font-bold text-navy">Request Sent</h1>
             <p className="text-gray text-sm">
-              If your email is registered, the admin has been notified and will review your password reset request.
+              Your password reset request has been sent to the admin or any user with
+              user-management permission. They can change your password for you.
             </p>
             <Link to="/login" className="inline-block mt-4">
               <Button variant="secondary">Return to Login</Button>
@@ -66,7 +74,8 @@ export default function ForgotPassword() {
             <div className="mb-7">
               <h1 className="text-2xl font-bold text-navy mb-2">Forgot password?</h1>
               <p className="text-sm text-gray">
-                If you forgot your password, well, then we'll email you instructions to reset your password.
+                Submit a request and the admin or any user with user-management permission will
+                set a new password for you.
               </p>
             </div>
 
@@ -80,7 +89,7 @@ export default function ForgotPassword() {
                 icon={<Mail size={16} />}
                 required
               />
-              <Button type="submit" size="lg" loading={loading} className="w-full">
+              <Button type="submit" size="lg" className="w-full">
                 Submit
               </Button>
             </form>
@@ -95,6 +104,23 @@ export default function ForgotPassword() {
           Copyright © 2025 · Town Centre Pharmacy · Background photo © Harrison Keely (CC BY 4.0)
         </p>
       </div>
+
+      <Modal open={showConfirm} onClose={() => !loading && setShowConfirm(false)} title="Send password reset request?" size="sm">
+        <div className="space-y-4">
+          <p className="text-sm text-gray">
+            Your request will be sent to the admin or any user with user-management permission,
+            who can set a new password for <strong className="text-navy">{email}</strong>.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={loading}>
+              Cancel
+            </Button>
+            <Button onClick={sendRequest} loading={loading}>
+              Send Request
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>

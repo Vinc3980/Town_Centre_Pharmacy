@@ -316,7 +316,7 @@ export const requestPasswordReset = asyncHandler(async (req: Request, res: Respo
   const data = requestPasswordResetSchema.parse(req.body);
   const user = await prisma.user.findFirst({ where: { email: data.email.toLowerCase(), isActive: true } });
   if (!user) {
-    res.json({ message: "If your email is registered, you will receive a password reset request shortly." });
+    res.json({ message: "If your account exists, a password reset request has been sent to the administrators." });
     return;
   }
 
@@ -334,7 +334,7 @@ export const requestPasswordReset = asyncHandler(async (req: Request, res: Respo
       message: `${user.name} (${user.email}) has requested a password reset. Please verify and update their password.`,
       priority: "warning",
       category: "security",
-      targetRoles: ["admin"],
+      targetRoles: ["branch_manager", "admin"],
       referenceId: user.id,
     },
   });
@@ -345,7 +345,7 @@ export const requestPasswordReset = asyncHandler(async (req: Request, res: Respo
     entity: "User", entityId: user.id,
   });
 
-  res.json({ message: "If your email is registered, you will receive a password reset request shortly." });
+  res.json({ message: "If your account exists, a password reset request has been sent to the administrators." });
 });
 
 export const uploadStaffImage = asyncHandler(async (req: Request, res: Response) => {

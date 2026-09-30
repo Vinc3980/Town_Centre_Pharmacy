@@ -245,3 +245,73 @@ describe("User audit logs", () => {
     expect(log).toBeDefined();
   });
 });
+
+describe("Password reset request flow", () => {
+  it("should create a manager-targeted notification when an active user requests a reset", async () => {
+    const res = await request(app)
+      .post("/api/v1/users/request-password-reset")
+      .send({ email: "testcashier@test.com" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain("password reset request has been sent");
+
+    const notif = await prisma.notification.findFirst({
+      where: { title: "Password Reset Request", message: { contains: "testcashier@test.com" } },
+      orderBy: { createdAt: "desc" },
+    });
+    expect(notif).toBeTruthy();
+    expect(notif!.targetRoles).toEqual(expect.arrayContaining(["admin", "branch_manager"]));
+    await prisma.notification.delete({ where: { id: notif!.id } });
+  });
+
+  it("should return a generic response without creating a notification for unknown emails", async () => {
+    const before = await prisma.notification.count({ where: { title: "Password Reset Request" } });
+
+    const res = await request(app)
+      .post("/api/v1/users/request-password-reset")
+      .send({ email: "ghost-user@test.com" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.message).toContain("If your account exists");
+    const after = await prisma.notification.count({ where: { title: "Password Reset Request" } });
+    expect(after).toBe(before);
+  });
+
+  it("should let a manager reset a user's password and the new password works for login", async () => {
+    const scratch = await prisma.user.create({
+      data: {
+        name: "Reset Scratch",
+        email: `reset-${randomUUID()}@test.com`,
+        staffId: `RS-${randomUUID().slice(0, 8)}`,
+        role: "staff",
+        permissions: [],
+        passwordHash: await bcrypt.hash("Test123!", 10),
+      },
+    });
+
+    const res = await request(app)
+      .post(`/api/v1/users/${scratch.id}/reset-password`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ newPassword: "NewPass123!" });
+    expect(res.status).toBe(200);
+
+    const loginOld = await request(app)
+      .post("/api/v1/auth/login")
+      .send({ email: scratch.email, password: "Test123!" });
+    expect(loginOld.status).toBe(401);
+
+    const loginNew = await request(app)
+      .post("/api/v1/auth/login")
+      .send({ email: scratch.email, password: "NewPass123!" });
+    expect(loginNew.status).toBe(200);
+    expect(loginNew.body.accessToken).toBeTruthy();
+  });
+
+  it("should forbid staff from resetting passwords", async () => {
+    const res = await request(app)
+      .post(`/api/v1/users/${ownerUserId}/reset-password`)
+      .set("Authorization", `Bearer ${cashierToken}`)
+      .send({ newPassword: "Hacked123!" });
+    expect(res.status).toBe(403);
+  });
+});

@@ -80,7 +80,7 @@ export async function adminResetPassword(id: string, newPassword: string): Promi
 }
 
 export async function requestPasswordReset(email: string): Promise<void> {
-  await api.post("/auth/request-password-reset", { email });
+  await api.post("/users/request-password-reset", { email });
 }
 
 export async function uploadStaffImage(id: string, file: File): Promise<{ profilePicture: string }> {
