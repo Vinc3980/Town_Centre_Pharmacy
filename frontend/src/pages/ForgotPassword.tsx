@@ -9,6 +9,7 @@ import Toast from "../components/ui/Toast";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | undefined>();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -29,7 +30,13 @@ export default function ForgotPassword() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    const value = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      setEmailError("Please enter your email address.");
+      return;
+    }
+    setEmailError(undefined);
+    setEmail(value);
     setShowConfirm(true);
   };
 
@@ -79,15 +86,15 @@ export default function ForgotPassword() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               <Input
                 label="Email Address"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(undefined); }}
                 placeholder="e.g. john@towncentrepharmacy.gh"
                 icon={<Mail size={16} />}
-                required
+                error={emailError}
               />
               <Button type="submit" size="lg" className="w-full">
                 Submit
