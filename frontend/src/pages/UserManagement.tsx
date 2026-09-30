@@ -189,7 +189,7 @@ function UserForm({ initial, onSubmit, onCancel, loading }: {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input label="Full Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. John Doe" />
-        <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. john@adompharmacy.gh" />
+        <Input label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="e.g. john@towncentrepharmacy.gh" />
         <Input label="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="e.g. 0244-118-800" />
         <Select label="Branch" value={form.branch} onChange={(e) => setForm({ ...form, branch: e.target.value })} options={branchOptions} />
         <Select label="Role" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} options={ROLE_OPTIONS} />

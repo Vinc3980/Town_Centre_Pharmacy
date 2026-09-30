@@ -49,7 +49,7 @@ async function getReportMeta(): Promise<ReportMeta> {
     pharmacy?.email,
   ].filter(Boolean).join(" · ");
   return {
-    pharmacyName: pharmacy?.name || "Adom Pharmacy",
+    pharmacyName: pharmacy?.name || "Town Centre Pharmacy",
     pharmacyInfo: info || undefined,
     generatedAt: new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }),
   };

@@ -2,15 +2,15 @@
 
 ## Overview
 
-Adom Pharmacy is a **modular monolith** designed for single-pharmacy operations with a clear path to multi-branch expansion. The backend is an API-only service that can be consumed by future mobile or third-party clients.
+Town Centre Pharmacy is a **modular monolith** designed for single-pharmacy operations with a clear path to multi-branch expansion. The backend is an API-only service that can be consumed by future mobile or third-party clients.
 
 ## System Architecture
 
 ```
-┌─────────────┐      HTTPS/WSS      ┌─────────────────────┐      Mongoose      ┌──────────┐
-│   React UI  │ ◄──────────────────► │   Express Backend   │ ◄─────────────────► │ MongoDB  │
-│  (Vite SPA) │   REST + Socket.IO   │   (Node/TypeScript) │                     │          │
-└─────────────┘                      └─────────────────────┘                     └──────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      HTTPS/WSS      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      Mongoose      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚   React UI  â”‚ â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º â”‚   Express Backend   â”‚ â—„â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º â”‚ MongoDB  â”‚
+â”‚  (Vite SPA) â”‚   REST + Socket.IO   â”‚   (Node/TypeScript) â”‚                     â”‚          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ## Backend Stack
@@ -52,50 +52,50 @@ Adom Pharmacy is a **modular monolith** designed for single-pharmacy operations 
 ## Directory Structure
 
 ```
-adom-pharmacy/
-├── backend/
-│   └── src/
-│       ├── config/          # Environment config, DB connection
-│       ├── constants/       # App-wide constants (API_PREFIX, roles)
-│       ├── controllers/     # Request handlers (thin)
-│       ├── middleware/       # auth, permit, errorHandler, tenant, upload
-│       ├── models/          # Mongoose schemas & models (16 collections)
-│       ├── repositories/    # Data access layer
-│       ├── routes/          # Express routers per module
-│       ├── seed/            # Database seeder
-│       ├── services/        # Business logic
-│       ├── sockets/         # Socket.IO event handlers
-│       ├── types/           # TypeScript type definitions
-│       ├── utils/           # Logger, ApiError, permissions, helpers
-│       ├── validators/      # Zod validation schemas
-│       └── __tests__/       # Backend tests
-├── frontend/
-│   └── src/
-│       ├── api/             # Axios instance, interceptors
-│       ├── app/             # Router config, query client
-│       ├── components/      # Shared/reusable UI components
-│       ├── context/         # React contexts
-│       ├── features/        # Domain-specific feature slices
-│       ├── hooks/           # Custom React hooks
-│       ├── layouts/         # Page layout shells
-│       ├── lib/             # Utility libraries
-│       ├── pages/           # Route-level page components
-│       ├── schemas/         # Zod schemas for frontend validation
-│       ├── services/        # API service functions
-│       ├── types/           # Frontend TypeScript types
-│       ├── utils/           # Frontend utilities
-│       └── __tests__/       # Frontend tests
-├── docs/                    # Project documentation
-└── e2e/                     # End-to-end tests
+town-centre-pharmacy/
+â”œâ”€â”€ backend/
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ config/          # Environment config, DB connection
+â”‚       â”œâ”€â”€ constants/       # App-wide constants (API_PREFIX, roles)
+â”‚       â”œâ”€â”€ controllers/     # Request handlers (thin)
+â”‚       â”œâ”€â”€ middleware/       # auth, permit, errorHandler, tenant, upload
+â”‚       â”œâ”€â”€ models/          # Mongoose schemas & models (16 collections)
+â”‚       â”œâ”€â”€ repositories/    # Data access layer
+â”‚       â”œâ”€â”€ routes/          # Express routers per module
+â”‚       â”œâ”€â”€ seed/            # Database seeder
+â”‚       â”œâ”€â”€ services/        # Business logic
+â”‚       â”œâ”€â”€ sockets/         # Socket.IO event handlers
+â”‚       â”œâ”€â”€ types/           # TypeScript type definitions
+â”‚       â”œâ”€â”€ utils/           # Logger, ApiError, permissions, helpers
+â”‚       â”œâ”€â”€ validators/      # Zod validation schemas
+â”‚       â””â”€â”€ __tests__/       # Backend tests
+â”œâ”€â”€ frontend/
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ api/             # Axios instance, interceptors
+â”‚       â”œâ”€â”€ app/             # Router config, query client
+â”‚       â”œâ”€â”€ components/      # Shared/reusable UI components
+â”‚       â”œâ”€â”€ context/         # React contexts
+â”‚       â”œâ”€â”€ features/        # Domain-specific feature slices
+â”‚       â”œâ”€â”€ hooks/           # Custom React hooks
+â”‚       â”œâ”€â”€ layouts/         # Page layout shells
+â”‚       â”œâ”€â”€ lib/             # Utility libraries
+â”‚       â”œâ”€â”€ pages/           # Route-level page components
+â”‚       â”œâ”€â”€ schemas/         # Zod schemas for frontend validation
+â”‚       â”œâ”€â”€ services/        # API service functions
+â”‚       â”œâ”€â”€ types/           # Frontend TypeScript types
+â”‚       â”œâ”€â”€ utils/           # Frontend utilities
+â”‚       â””â”€â”€ __tests__/       # Frontend tests
+â”œâ”€â”€ docs/                    # Project documentation
+â””â”€â”€ e2e/                     # End-to-end tests
 ```
 
 ## Data Flow
 
 ### Request Lifecycle
 
-1. Client sends HTTP request → Express receives it
+1. Client sends HTTP request â†’ Express receives it
 2. **Global middleware** runs: Helmet (headers), CORS, body parsing, mongo-sanitize, rate limiting, logging (pino-http, morgan)
-3. **Route-level middleware** runs: `requireAuth` (JWT verification) → `requirePermission` (RBAC check)
+3. **Route-level middleware** runs: `requireAuth` (JWT verification) â†’ `requirePermission` (RBAC check)
 4. **Controller** validates input using Zod schemas from `validators/`
 5. **Service** executes business logic
 6. **Repository** performs Mongoose operations against MongoDB
@@ -104,21 +104,21 @@ adom-pharmacy/
 ### Authentication Flow
 
 ```
-Login → Verify credentials → Issue access token (15m) + refresh token (7d)
-  ↓
-Request → Bearer token in Authorization header → requireAuth middleware verifies JWT
-  ↓
-Token expired → POST /auth/refresh with refresh token → New access token
+Login â†’ Verify credentials â†’ Issue access token (15m) + refresh token (7d)
+  â†“
+Request â†’ Bearer token in Authorization header â†’ requireAuth middleware verifies JWT
+  â†“
+Token expired â†’ POST /auth/refresh with refresh token â†’ New access token
 ```
 
 ### Real-time Flow
 
 ```
-Socket.IO connection → JWT handshake → Join rooms (user, role)
-  ↓
-Sale created → Emit 'sale:created' → Dashboard updates live
-  ↓
-Notification created → Emit to target roles → In-app notification bell
+Socket.IO connection â†’ JWT handshake â†’ Join rooms (user, role)
+  â†“
+Sale created â†’ Emit 'sale:created' â†’ Dashboard updates live
+  â†“
+Notification created â†’ Emit to target roles â†’ In-app notification bell
 ```
 
 ## Key Design Decisions

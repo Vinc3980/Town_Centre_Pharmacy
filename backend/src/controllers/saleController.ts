@@ -422,7 +422,7 @@ export const getSaleReceipt = asyncHandler(async (req: Request, res: Response) =
   if (!sale) throw new ApiError(404, "Sale not found");
 
   const pharmacy = await prisma.pharmacy.findFirst();
-  const pharmacyName = pharmacy?.name || "Adom Pharmacy";
+  const pharmacyName = pharmacy?.name || "Town Centre Pharmacy";
   const pharmacyAddress = pharmacy
     ? [pharmacy.address, pharmacy.city, pharmacy.region, pharmacy.country].filter(Boolean).join(", ")
     : "123 Liberation Road, Accra, Ghana";

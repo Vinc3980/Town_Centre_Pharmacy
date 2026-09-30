@@ -15,7 +15,7 @@ async function loginAs(request: any, email: string, password: string) {
 test.describe("Pharmacy E2E Flow", () => {
   test("18-step complete pharmacy workflow", async ({ request, page }) => {
     // Step 1: Login as owner
-    const ownerToken = await loginAs(request, "owner@adompharmacy.gh", "Owner123!");
+    const ownerToken = await loginAs(request, "owner@towncentrepharmacy.gh", "Owner123!");
     expect(ownerToken).toBeTruthy();
 
     // Step 2: Create staff via API
@@ -48,7 +48,7 @@ test.describe("Pharmacy E2E Flow", () => {
     // Medicine creation may fail if no category exists, test structure is what matters
 
     // Step 5: Login as pharmacist
-    const pharmToken = await loginAs(request, "pharmacist@adompharmacy.gh", "Pharma123!");
+    const pharmToken = await loginAs(request, "pharmacist@towncentrepharmacy.gh", "Pharma123!");
     expect(pharmToken).toBeTruthy();
 
     // Step 6: Navigate to login page in browser
@@ -57,7 +57,7 @@ test.describe("Pharmacy E2E Flow", () => {
     await expect(page.getByLabel(/password/i)).toBeVisible();
 
     // Step 7: Login as owner in browser
-    await page.getByLabel(/email/i).fill("owner@adompharmacy.gh");
+    await page.getByLabel(/email/i).fill("owner@towncentrepharmacy.gh");
     await page.getByLabel(/password/i).fill("Owner123!");
     await page.getByRole("button", { name: /sign in|log in|login/i }).click();
 
@@ -111,7 +111,7 @@ test.describe("Pharmacy E2E Flow", () => {
     await expect(page).toHaveURL(/login/);
 
     // Login
-    await page.getByLabel(/email/i).fill("owner@adompharmacy.gh");
+    await page.getByLabel(/email/i).fill("owner@towncentrepharmacy.gh");
     await page.getByLabel(/password/i).fill("Owner123!");
     await page.getByRole("button", { name: /sign in|log in|login/i }).click();
 
@@ -131,7 +131,7 @@ test.describe("Pharmacy E2E Flow", () => {
   test("Responsive layout", async ({ page }) => {
     // Login first
     await page.goto(`${BASE_URL}/login`);
-    await page.getByLabel(/email/i).fill("owner@adompharmacy.gh");
+    await page.getByLabel(/email/i).fill("owner@towncentrepharmacy.gh");
     await page.getByLabel(/password/i).fill("Owner123!");
     await page.getByRole("button", { name: /sign in|log in|login/i }).click();
     await expect(page).toHaveURL(/dashboard|\/$/);

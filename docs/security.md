@@ -2,7 +2,7 @@
 
 ## Overview
 
-Adom Pharmacy implements defense-in-depth security across authentication, authorization, input validation, network hardening, and audit logging.
+Town Centre Pharmacy implements defense-in-depth security across authentication, authorization, input validation, network hardening, and audit logging.
 
 ## Authentication
 
@@ -37,7 +37,7 @@ The system uses a **dual-token strategy**:
 ### Password Storage
 
 - Passwords are hashed using **bcryptjs** with a salt rounds of 10
-- The `passwordHash` field has `select: false` — it is never returned in API responses by default
+- The `passwordHash` field has `select: false` â€” it is never returned in API responses by default
 
 ## Authorization
 
@@ -169,7 +169,7 @@ Rate limit headers (`RateLimit-*` / `X-RateLimit-*`) are returned with every res
 
 ```typescript
 app.use(cors({
-  origin: env.corsOrigin,  // e.g., "http://localhost:5173" or "https://adompharmacy.com"
+  origin: env.corsOrigin,  // e.g., "http://localhost:5173" or "https://towncentrepharmacy.com"
   credentials: true,        // Allow cookies/auth headers
 }));
 ```
@@ -236,7 +236,7 @@ Every significant system action is recorded in the `AuditLog` collection:
 }
 ```
 
-Audit logs are **append-only** — they cannot be modified or deleted through the API.
+Audit logs are **append-only** â€” they cannot be modified or deleted through the API.
 
 ## Additional Security Measures
 
@@ -262,7 +262,7 @@ Audit logs are **append-only** — they cannot be modified or deleted through th
 ### Personal Data Storage (Ghana Card)
 
 - Customer national ID numbers are stored in `customers.ghanaCardNumber` as **plain text**
-- This is a deliberate, documented decision: values are captured for credit-sale identity checks and must remain readable by pharmacy staff — no encryption-at-rest or hashing is applied at the application layer
+- This is a deliberate, documented decision: values are captured for credit-sale identity checks and must remain readable by pharmacy staff â€” no encryption-at-rest or hashing is applied at the application layer
 - The field is optional and is only required by the POS when a credit sale is charged (walk-in customers without a card cannot be put on credit)
 - Like other customer PII (name, phone, address, allergies), it is protected by authentication/authorization on the API, never returned outside customer endpoints, and must be handled per your data-retention policy
 - If regulatory requirements change, column-level encryption can be added without changing the API contract

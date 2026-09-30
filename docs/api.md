@@ -3,7 +3,7 @@
 ## Base URL
 
 ```
-Production:  https://api.adompharmacy.com/api/v1
+Production:  https://api.towncentrepharmacy.com/api/v1
 Development: http://localhost:5000/api/v1
 ```
 
@@ -26,7 +26,7 @@ POST /api/v1/auth/login
 **Body:**
 ```json
 {
-  "email": "owner@adompharmacy.gh",
+  "email": "owner@towncentrepharmacy.gh",
   "password": "Owner123!"
 }
 ```
@@ -39,7 +39,7 @@ POST /api/v1/auth/login
     "user": {
       "id": "...",
       "name": "Nana Adjei (Owner)",
-      "email": "owner@adompharmacy.gh",
+      "email": "owner@towncentrepharmacy.gh",
       "role": "owner",
       "permissions": ["view_dashboard", "manage_users", ...]
     },
@@ -123,7 +123,7 @@ List endpoints support query parameters:
 |-----------|---------|---------------------------------|
 | `page`    | 1       | Page number                     |
 | `limit`   | 20      | Items per page (max: 100)       |
-| `search`  | —       | Full-text search term           |
+| `search`  | â€”       | Full-text search term           |
 | `sort`    | -createdAt | Sort field (prefix `-` for descending) |
 
 **Paginated response:**
@@ -164,12 +164,12 @@ List endpoints support query parameters:
 
 | Method | Endpoint                        | Auth | Permission            | Description              |
 |--------|---------------------------------|------|-----------------------|--------------------------|
-| GET    | `/medicines`                    | Yes  | —                     | List/search medicines    |
+| GET    | `/medicines`                    | Yes  | â€”                     | List/search medicines    |
 | POST   | `/medicines`                    | Yes  | `manage_medicines`    | Create medicine          |
 | PUT    | `/medicines/:id`                | Yes  | `manage_medicines`    | Update medicine          |
 | DELETE | `/medicines/:id`                | Yes  | `manage_medicines`    | Delete medicine          |
 | POST   | `/medicines/:id/discontinue`    | Yes  | `manage_medicines`    | Discontinue medicine     |
-| GET    | `/medicines/barcode/:barcode`   | Yes  | —                     | Lookup by barcode        |
+| GET    | `/medicines/barcode/:barcode`   | Yes  | â€”                     | Lookup by barcode        |
 | POST   | `/medicines/stock/receive`      | Yes  | `manage_inventory`    | Receive stock (new batch)|
 | POST   | `/medicines/stock/adjust`       | Yes  | `perform_stock_adjustment` | Adjust stock levels |
 | GET    | `/medicines/reports/low-stock`  | Yes  | `view_reports`        | Low stock report         |
@@ -249,7 +249,7 @@ List endpoints support query parameters:
 
 | Method | Endpoint          | Auth | Permission      | Description       |
 |--------|-------------------|------|-----------------|-------------------|
-| GET    | `/customers`      | Yes  | —               | List customers    |
+| GET    | `/customers`      | Yes  | â€”               | List customers    |
 | POST   | `/customers`      | Yes  | `process_sales` | Create customer   |
 | PUT    | `/customers/:id`  | Yes  | `process_sales` | Update customer   |
 

@@ -173,7 +173,7 @@ async function migrate() {
         pharmacyId: id,
         lowStockThreshold: s.lowStockThreshold ?? 10,
         expiryWarningDays: s.expiryWarningDays ?? 30,
-        receiptFooter: s.receiptFooter ?? "Thank you for choosing Adom Pharmacy",
+        receiptFooter: s.receiptFooter ?? "Thank you for choosing Town Centre Pharmacy",
         allowNegativeStock: s.allowNegativeStock ?? false,
         requireManagerApprovalForRefund: s.requireManagerApprovalForRefund ?? true,
         requireManagerApprovalForStockAdjustment: s.requireManagerApprovalForStockAdjustment ?? true,

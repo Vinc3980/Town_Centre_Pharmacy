@@ -51,8 +51,8 @@ const updateSecuritySettingsSchema = z.object({
 });
 
 const DEFAULT_PHARMACY = {
-  name: "Adom Pharmacy",
-  registrationNumber: "ADOM-001",
+  name: "Town Centre Pharmacy",
+  registrationNumber: "TCP-001",
   phone: "",
   email: "",
   address: "",

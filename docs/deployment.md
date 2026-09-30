@@ -6,14 +6,14 @@
 |---------------------|----------|----------------------------------|-------------------------------------|
 | `NODE_ENV`          | No       | `development`                    | Set to `production` for live deploys |
 | `PORT`              | No       | `5000`                           | Backend server port                 |
-| `MONGODB_URI`       | Yes*     | `mongodb://localhost:27017/adom-pharmacy` | MongoDB connection string |
+| `MONGODB_URI`       | Yes*     | `mongodb://localhost:27017/town-centre-pharmacy` | MongoDB connection string |
 | `JWT_ACCESS_SECRET` | Yes*     | `dev-access-secret` (dev only)   | Secret for signing access tokens    |
 | `JWT_REFRESH_SECRET`| Yes*     | `dev-refresh-secret` (dev only)  | Secret for signing refresh tokens   |
 | `JWT_ACCESS_EXPIRES`| No       | `15m`                            | Access token lifetime               |
 | `JWT_REFRESH_EXPIRES`| No      | `7d`                             | Refresh token lifetime              |
 | `CORS_ORIGIN`       | No       | `http://localhost:5173`          | Allowed frontend origin             |
 
-*Required in production — the app will refuse to start without them.
+*Required in production â€” the app will refuse to start without them.
 
 Generate secure secrets:
 ```bash
@@ -30,23 +30,23 @@ openssl rand -hex 64
 
 ### 2. Create a Database User
 
-1. Go to **Database Access** → **Add New Database User**
+1. Go to **Database Access** â†’ **Add New Database User**
 2. Create a user with password authentication
-3. Grant **Read/Write** access to the `adom-pharmacy` database
+3. Grant **Read/Write** access to the `town-centre-pharmacy` database
 
 ### 3. Whitelist IP Addresses
 
-1. Go to **Network Access** → **Add IP Address**
+1. Go to **Network Access** â†’ **Add IP Address**
 2. Add your server's IP (or `0.0.0.0/0` for development only)
 
 ### 4. Get the Connection String
 
-1. Go to **Database** → **Connect** → **Connect your application**
+1. Go to **Database** â†’ **Connect** â†’ **Connect your application**
 2. Copy the connection string
 3. Replace `<password>` with your database user's password
 
 ```env
-MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/adom-pharmacy?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/town-centre-pharmacy?retryWrites=true&w=majority
 ```
 
 ### 5. Seed the Production Database
@@ -82,8 +82,8 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # 3. Clone the repository
-git clone <your-repo-url> /opt/adom-pharmacy
-cd /opt/adom-pharmacy
+git clone <your-repo-url> /opt/town-centre-pharmacy
+cd /opt/town-centre-pharmacy
 
 # 4. Install and build backend
 cd backend
@@ -94,7 +94,7 @@ npm run build
 cat > .env << 'EOF'
 NODE_ENV=production
 PORT=5000
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/adom-pharmacy?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/town-centre-pharmacy?retryWrites=true&w=majority
 JWT_ACCESS_SECRET=$(openssl rand -hex 64)
 JWT_REFRESH_SECRET=$(openssl rand -hex 64)
 JWT_ACCESS_EXPIRES=15m
@@ -104,7 +104,7 @@ EOF
 
 # 6. Start with PM2 (process manager)
 npm install -g pm2
-pm2 start dist/server.js --name adom-pharmacy-api
+pm2 start dist/server.js --name town-centre-pharmacy-api
 pm2 save
 pm2 startup  # Follow instructions to auto-start on boot
 ```
@@ -131,12 +131,12 @@ CMD ["node", "dist/server.js"]
 
 ```bash
 # Build and run
-docker build -t adom-pharmacy-api ./backend
+docker build -t town-centre-pharmacy-api ./backend
 docker run -d \
-  --name adom-api \
+  --name town-centre-pharmacy-api \
   -p 5000:5000 \
   --env-file backend/.env \
-  adom-pharmacy-api
+  town-centre-pharmacy-api
 ```
 
 ## Frontend Deployment
@@ -148,7 +148,7 @@ docker run -d \
 3. Set the root directory to `frontend`
 4. Configure environment variable:
    ```
-   VITE_API_URL=https://api.adompharmacy.com/api/v1
+   VITE_API_URL=https://api.towncentrepharmacy.com/api/v1
    ```
 5. Deploy
 
@@ -177,27 +177,27 @@ Vercel automatically handles:
 ```bash
 # 1. Build the frontend
 cd frontend
-VITE_API_URL=https://api.adompharmacy.com/api/v1 npm run build
+VITE_API_URL=https://api.towncentrepharmacy.com/api/v1 npm run build
 
 # 2. Copy dist/ to nginx web root
-sudo cp -r dist/* /var/www/adom-pharmacy/
+sudo cp -r dist/* /var/www/town-centre-pharmacy/
 
 # 3. Configure nginx
-cat > /etc/nginx/sites-available/adom-pharmacy << 'EOF'
+cat > /etc/nginx/sites-available/town-centre-pharmacy << 'EOF'
 server {
     listen 80;
-    server_name adompharmacy.com www.adompharmacy.com;
+    server_name towncentrepharmacy.com www.towncentrepharmacy.com;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name adompharmacy.com www.adompharmacy.com;
+    server_name towncentrepharmacy.com www.towncentrepharmacy.com;
 
-    ssl_certificate /etc/letsencrypt/live/adompharmacy.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/adompharmacy.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/towncentrepharmacy.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/towncentrepharmacy.com/privkey.pem;
 
-    root /var/www/adom-pharmacy;
+    root /var/www/town-centre-pharmacy;
     index index.html;
 
     location / {
@@ -221,7 +221,7 @@ server {
 }
 EOF
 
-sudo ln -s /etc/nginx/sites-available/adom-pharmacy /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/town-centre-pharmacy /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
@@ -231,10 +231,10 @@ Set `CORS_ORIGIN` to your deployed frontend's exact URL:
 
 ```env
 # If frontend is on Vercel
-CORS_ORIGIN=https://adom-pharmacy.vercel.app
+CORS_ORIGIN=https://town-centre-pharmacy.vercel.app
 
 # If frontend is on custom domain
-CORS_ORIGIN=https://adompharmacy.com
+CORS_ORIGIN=https://towncentrepharmacy.com
 ```
 
 Do **not** use `*` as the CORS origin in production.
@@ -248,7 +248,7 @@ Do **not** use `*` as the CORS origin in production.
 sudo apt install certbot python3-certbot-nginx
 
 # Get certificate and auto-configure nginx
-sudo certbot --nginx -d adompharmacy.com -d www.adompharmacy.com
+sudo certbot --nginx -d towncentrepharmacy.com -d www.towncentrepharmacy.com
 
 # Auto-renewal is set up by default; verify with:
 sudo certbot renew --dry-run
@@ -280,6 +280,6 @@ sudo certbot renew --dry-run
 - [ ] HTTPS is enabled and working
 - [ ] Database is seeded with at least the owner account
 - [ ] Rate limiting is active
-- [ ] Logs are being collected (Pino → file or log aggregation service)
+- [ ] Logs are being collected (Pino â†’ file or log aggregation service)
 - [ ] MongoDB Atlas IP whitelist includes the server IP
 - [ ] Error monitoring is configured (e.g., Sentry)

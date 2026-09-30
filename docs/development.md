@@ -13,7 +13,7 @@
 
 ```bash
 git clone <repository-url>
-cd adom-pharmacy
+cd town-centre-pharmacy
 ```
 
 ### 2. Install Dependencies
@@ -41,7 +41,7 @@ Edit `backend/.env` with your values:
 ```env
 NODE_ENV=development
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/adom-pharmacy
+MONGODB_URI=mongodb://localhost:27017/town-centre-pharmacy
 JWT_ACCESS_SECRET=your-access-secret-min-32-chars
 JWT_REFRESH_SECRET=your-refresh-secret-min-32-chars
 JWT_ACCESS_EXPIRES=15m
@@ -76,11 +76,11 @@ This wipes existing data and creates:
 ### 5. Start Development Servers
 
 ```bash
-# Terminal 1 — Backend (port 5000)
+# Terminal 1 â€” Backend (port 5000)
 cd backend
 npm run dev
 
-# Terminal 2 — Frontend (port 5173)
+# Terminal 2 â€” Frontend (port 5173)
 cd frontend
 npm run dev
 ```
@@ -121,7 +121,7 @@ Open `http://localhost:5173` in your browser.
 
 1. Install MongoDB Community Edition
 2. Start the service: `mongod` or via your OS service manager
-3. Connection string: `mongodb://localhost:27017/adom-pharmacy`
+3. Connection string: `mongodb://localhost:27017/town-centre-pharmacy`
 
 ### MongoDB Atlas (Cloud)
 
@@ -131,7 +131,7 @@ Open `http://localhost:5173` in your browser.
 4. Get the connection string and set it as `MONGODB_URI`
 
 ```env
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/adom-pharmacy?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/town-centre-pharmacy?retryWrites=true&w=majority
 ```
 
 ## Demo Accounts
@@ -140,12 +140,12 @@ After seeding, use these credentials:
 
 | Role               | Email                          | Password       |
 |--------------------|--------------------------------|----------------|
-| Owner              | owner@adompharmacy.gh          | Owner123!      |
-| Branch Manager     | manager@adompharmacy.gh        | Manager123!    |
-| Pharmacist         | pharmacist@adompharmacy.gh     | Pharma123!     |
-| Cashier            | cashier@adompharmacy.gh        | Cashier123!    |
-| Inventory Officer  | inventory@adompharmacy.gh      | Inventory123!  |
-| Auditor            | auditor@adompharmacy.gh        | Auditor123!    |
+| Owner              | owner@towncentrepharmacy.gh          | Owner123!      |
+| Branch Manager     | manager@towncentrepharmacy.gh        | Manager123!    |
+| Pharmacist         | pharmacist@towncentrepharmacy.gh     | Pharma123!     |
+| Cashier            | cashier@towncentrepharmacy.gh        | Cashier123!    |
+| Inventory Officer  | inventory@towncentrepharmacy.gh      | Inventory123!  |
+| Auditor            | auditor@towncentrepharmacy.gh        | Auditor123!    |
 
 ## Testing
 
@@ -176,4 +176,4 @@ Tests use Vitest with Testing Library for React component testing.
 - **Naming**: Files use PascalCase for components/models, camelCase for utilities
 - **Validation**: Zod schemas validate all external input (request bodies, query params)
 - **Errors**: Use `ApiError` class for structured error responses
-- **Logging**: Use Pino logger (`logger.info()`, `logger.error()`) — never `console.log` in production code
+- **Logging**: Use Pino logger (`logger.info()`, `logger.error()`) â€” never `console.log` in production code

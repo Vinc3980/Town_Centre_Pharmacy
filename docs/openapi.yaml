@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Adom Pharmacy Management System API
+  title: Town Centre Pharmacy Management System API
   description: |
     Production-grade pharmacy management platform supporting multi-branch operations,
     inventory (FEFO), POS, prescriptions, and analytics.
@@ -13,16 +13,16 @@ info:
     **Rate Limiting:** Login endpoint is rate-limited to 20 requests per 15 minutes per IP.
   version: 1.0.0
   contact:
-    name: Adom Pharmacy Support
-    email: support@adompharmacy.gh
+    name: Town Centre Pharmacy Support
+    email: support@towncentrepharmacy.gh
   license:
     name: Private
-    url: https://adompharmacy.gh/license
+    url: https://towncentrepharmacy.gh/license
 
 servers:
   - url: http://localhost:5000/api/v1
     description: Development
-  - url: https://api.adompharmacy.com/api/v1
+  - url: https://api.towncentrepharmacy.com/api/v1
     description: Production
 
 tags:
@@ -59,7 +59,7 @@ security:
   - BearerAuth: []
 
 paths:
-  # ─── Health ────────────────────────────────────────────
+  # â”€â”€â”€ Health â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /health:
     get:
       tags: [Health]
@@ -77,7 +77,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
-  # ─── Auth ──────────────────────────────────────────────
+  # â”€â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /auth/login:
     post:
       tags: [Auth]
@@ -190,7 +190,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  # ─── Users ─────────────────────────────────────────────
+  # â”€â”€â”€ Users â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /users:
     get:
       tags: [Users]
@@ -373,7 +373,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Medicines ─────────────────────────────────────────
+  # â”€â”€â”€ Medicines â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /medicines:
     get:
       tags: [Medicines]
@@ -706,7 +706,7 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
-  # ─── Sales ─────────────────────────────────────────────
+  # â”€â”€â”€ Sales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /sales:
     get:
       tags: [Sales]
@@ -1106,7 +1106,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Customers ─────────────────────────────────────────
+  # â”€â”€â”€ Customers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /customers:
     get:
       tags: [Customers]
@@ -1215,7 +1215,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Expenses ──────────────────────────────────────────
+  # â”€â”€â”€ Expenses â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /expenses:
     get:
       tags: [Expenses]
@@ -1450,7 +1450,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Daily ─────────────────────────────────────────────
+  # â”€â”€â”€ Daily â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /daily/sessions:
     post:
       tags: [Daily]
@@ -1810,7 +1810,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Reports ───────────────────────────────────────────
+  # â”€â”€â”€ Reports â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /reports/sales:
     get:
       tags: [Reports]
@@ -2086,7 +2086,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReportResponse"
 
-  # ─── Dashboard ─────────────────────────────────────────
+  # â”€â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /dashboard:
     get:
       tags: [Dashboard]
@@ -2437,7 +2437,7 @@ paths:
                         type: object
                         nullable: true
 
-  # ─── Notifications ─────────────────────────────────────
+  # â”€â”€â”€ Notifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /notifications:
     get:
       tags: [Notifications]
@@ -2553,7 +2553,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  # ─── Settings ──────────────────────────────────────────
+  # â”€â”€â”€ Settings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /settings:
     get:
       tags: [Settings]
@@ -2621,7 +2621,7 @@ paths:
               properties:
                 name:
                   type: string
-                  example: Adom Pharmacy
+                  example: Town Centre Pharmacy
                 registrationNumber:
                   type: string
                   example: "PH-2024-001"
@@ -2630,7 +2630,7 @@ paths:
                   example: "+233 30 200 1234"
                 email:
                   type: string
-                  example: info@adompharmacy.gh
+                  example: info@towncentrepharmacy.gh
                 address:
                   type: string
                   example: "123 Liberation Road"
@@ -2812,7 +2812,7 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-  # ─── Audit ─────────────────────────────────────────────
+  # â”€â”€â”€ Audit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /audit:
     get:
       tags: [Audit]
@@ -2899,7 +2899,7 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
-  # ─── Profile ───────────────────────────────────────────
+  # â”€â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   /profile:
     get:
       tags: [Profile]
@@ -2939,7 +2939,7 @@ paths:
                   example: Nana Adjei
                 email:
                   type: string
-                  example: nana@adompharmacy.gh
+                  example: nana@towncentrepharmacy.gh
                 phone:
                   type: string
                   example: "+233241234567"
@@ -3003,9 +3003,9 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
-# ═══════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 # Components
-# ═══════════════════════════════════════════════════════════
+# â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 components:
   securitySchemes:
     BearerAuth:
@@ -3069,7 +3069,7 @@ components:
       description: Items per page
 
   schemas:
-    # ── Auth ──
+    # â”€â”€ Auth â”€â”€
     LoginRequest:
       type: object
       required: [email, password]
@@ -3077,7 +3077,7 @@ components:
         email:
           type: string
           format: email
-          example: owner@adompharmacy.gh
+          example: owner@towncentrepharmacy.gh
         password:
           type: string
           example: Owner123!
@@ -3108,7 +3108,7 @@ components:
             user:
               $ref: "#/components/schemas/UserProfile"
 
-    # ── User ──
+    # â”€â”€ User â”€â”€
     User:
       type: object
       properties:
@@ -3120,7 +3120,7 @@ components:
           example: Nana Adjei (Owner)
         email:
           type: string
-          example: owner@adompharmacy.gh
+          example: owner@towncentrepharmacy.gh
         phone:
           type: string
           example: "+233241234567"
@@ -3157,7 +3157,7 @@ components:
           example: Nana Adjei (Owner)
         email:
           type: string
-          example: owner@adompharmacy.gh
+          example: owner@towncentrepharmacy.gh
         phone:
           type: string
           example: "+233241234567"
@@ -3189,7 +3189,7 @@ components:
         email:
           type: string
           format: email
-          example: kwame@adompharmacy.gh
+          example: kwame@towncentrepharmacy.gh
         password:
           type: string
           minLength: 6
@@ -3211,7 +3211,7 @@ components:
         email:
           type: string
           format: email
-          example: kwame@adompharmacy.gh
+          example: kwame@towncentrepharmacy.gh
         role:
           type: string
           enum: [owner, branch_manager, pharmacist, cashier, inventory_officer, auditor]
@@ -3221,7 +3221,7 @@ components:
         isActive:
           type: boolean
 
-    # ── Medicine ──
+    # â”€â”€ Medicine â”€â”€
     Medicine:
       type: object
       properties:
@@ -3490,7 +3490,7 @@ components:
           type: string
           example: Expired items removed from shelf
 
-    # ── Sale ──
+    # â”€â”€ Sale â”€â”€
     Sale:
       type: object
       properties:
@@ -3811,7 +3811,7 @@ components:
       properties:
         name:
           type: string
-          example: Adom Pharmacy
+          example: Town Centre Pharmacy
         address:
           type: string
           example: "123 Liberation Road, Accra, Ghana"
@@ -3875,7 +3875,7 @@ components:
         status:
           type: string
 
-    # ── Customer ──
+    # â”€â”€ Customer â”€â”€
     Customer:
       type: object
       properties:
@@ -3914,7 +3914,7 @@ components:
           type: string
           example: Prefers SMS notifications
 
-    # ── Expense ──
+    # â”€â”€ Expense â”€â”€
     Expense:
       type: object
       properties:
@@ -3960,7 +3960,7 @@ components:
           type: string
           format: date-time
 
-    # ── Notification ──
+    # â”€â”€ Notification â”€â”€
     Notification:
       type: object
       properties:
@@ -3998,7 +3998,7 @@ components:
           type: string
           format: date-time
 
-    # ── Daily Session ──
+    # â”€â”€ Daily Session â”€â”€
     DailySession:
       type: object
       properties:
@@ -4068,7 +4068,7 @@ components:
           type: string
           format: date-time
 
-    # ── Daily Report ──
+    # â”€â”€ Daily Report â”€â”€
     DailyReport:
       type: object
       properties:
@@ -4154,7 +4154,7 @@ components:
           type: string
           format: date-time
 
-    # ── Settings ──
+    # â”€â”€ Settings â”€â”€
     PharmacyInfo:
       type: object
       properties:
@@ -4162,7 +4162,7 @@ components:
           type: string
         name:
           type: string
-          example: Adom Pharmacy
+          example: Town Centre Pharmacy
         registrationNumber:
           type: string
           example: "PH-2024-001"
@@ -4171,7 +4171,7 @@ components:
           example: "+233 30 200 1234"
         email:
           type: string
-          example: info@adompharmacy.gh
+          example: info@towncentrepharmacy.gh
         address:
           type: string
           example: "123 Liberation Road"
@@ -4221,7 +4221,7 @@ components:
           example: true
         receiptFooter:
           type: string
-          example: Thank you for choosing Adom Pharmacy
+          example: Thank you for choosing Town Centre Pharmacy
         taxRate:
           type: number
           format: float
@@ -4246,7 +4246,7 @@ components:
           type: integer
           example: 15
 
-    # ── Audit ──
+    # â”€â”€ Audit â”€â”€
     AuditLog:
       type: object
       properties:
@@ -4272,7 +4272,7 @@ components:
           nullable: true
         description:
           type: string
-          example: Nana Adjei (Owner) sold 2 x Paracetamol 500mg — GHS 10.00
+          example: Nana Adjei (Owner) sold 2 x Paracetamol 500mg â€” GHS 10.00
         ipAddress:
           type: string
           nullable: true
@@ -4280,7 +4280,7 @@ components:
           type: string
           format: date-time
 
-    # ── Dashboard ──
+    # â”€â”€ Dashboard â”€â”€
     DashboardSummary:
       type: object
       properties:
@@ -4375,7 +4375,7 @@ components:
               type: string
               format: date-time
 
-    # ── Common ──
+    # â”€â”€ Common â”€â”€
     ErrorResponse:
       type: object
       properties:

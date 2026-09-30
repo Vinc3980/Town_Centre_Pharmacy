@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchAllSettings } from "../api/settings";
 import { useAuth } from "../context/AuthContext";
 
-export const FALLBACK_PHARMACY_NAME = "Adom Pharmacy";
+export const FALLBACK_PHARMACY_NAME = "Town Centre Pharmacy";
 
 export function usePharmacyName() {
   const { hasPermission } = useAuth();

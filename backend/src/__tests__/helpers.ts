@@ -201,10 +201,10 @@ export async function setupTestData() {
 
   await prisma.pharmacy.create({
     data: {
-      name: "Adom Pharmacy",
+      name: "Town Centre Pharmacy",
       registrationNumber: "PH-001",
       phone: "+233 30 200 1234",
-      email: "info@adompharmacy.gh",
+      email: "info@towncentrepharmacy.gh",
       address: "123 Liberation Road",
       city: "Accra",
       region: "Greater Accra",

@@ -35,7 +35,7 @@ const STAFF_PERMISSIONS = ["view_dashboard", "process_sales", "view_reports"];
 const USERS = [
   {
     name: "Nana Adjei (Admin)",
-    email: "admin@adompharmacy.gh",
+    email: "admin@towncentrepharmacy.gh",
     staffId: "AD-0001",
     role: "admin",
     permissions: PERMISSIONS,
@@ -43,7 +43,7 @@ const USERS = [
   },
   {
     name: "Kwame Osei",
-    email: "manager@adompharmacy.gh",
+    email: "manager@towncentrepharmacy.gh",
     staffId: "BM-0001",
     role: "branch_manager",
     permissions: PERMISSIONS,
@@ -51,7 +51,7 @@ const USERS = [
   },
   {
     name: "Ama Serwaa",
-    email: "staff@adompharmacy.gh",
+    email: "staff@towncentrepharmacy.gh",
     staffId: "ST-0001",
     role: "staff",
     permissions: STAFF_PERMISSIONS,

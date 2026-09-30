@@ -2,7 +2,7 @@
 
 ## Overview
 
-Adom Pharmacy uses **MongoDB** (via Mongoose 8.x) as its primary data store. The database name is `adom-pharmacy` (configurable via `MONGODB_URI`).
+Town Centre Pharmacy uses **MongoDB** (via Mongoose 8.x) as its primary data store. The database name is `town-centre-pharmacy` (configurable via `MONGODB_URI`).
 
 ## Collections
 
@@ -69,12 +69,12 @@ Multi-branch support (prepared for future expansion).
 
 | Field       | Type     | Description                          |
 |-------------|----------|--------------------------------------|
-| pharmacyId  | ObjectId | Ref → Pharmacy (required)            |
+| pharmacyId  | ObjectId | Ref â†’ Pharmacy (required)            |
 | name        | String   | Branch name                          |
 | code        | String   | Unique branch code (uppercase)       |
 | address     | String   | Branch address                       |
 | phone       | String   | Branch phone                         |
-| managerId   | ObjectId | Ref → User (branch manager)          |
+| managerId   | ObjectId | Ref â†’ User (branch manager)          |
 | status      | String   | active / inactive                    |
 
 **Indexes:** `pharmacyId`, compound unique on `(pharmacyId, name)` and `(pharmacyId, code)`, `(pharmacyId, status)`
@@ -110,14 +110,14 @@ Core product catalog.
 | name               | String   | Product name (indexed)               |
 | genericName        | String   | Generic/drug name                    |
 | brand              | String   | Brand name                           |
-| category           | ObjectId | Ref → Category (required)            |
+| category           | ObjectId | Ref â†’ Category (required)            |
 | manufacturer       | String   | Manufacturing company                |
 | dosage, strength, form | String | Product specifications            |
 | barcode            | String   | Barcode number (indexed)             |
 | sku                | String   | Stock keeping unit (unique, indexed) |
 | prescriptionRequired | Boolean | Whether prescription is needed     |
 | description        | String   | Product description                  |
-| supplier           | ObjectId | Ref → Supplier                       |
+| supplier           | ObjectId | Ref â†’ Supplier                       |
 | purchasePrice      | Number   | Cost price (required)                |
 | sellingPrice       | Number   | Retail price (required)              |
 | minStock, maxStock, reorderLevel | Number | Stock thresholds             |
@@ -131,17 +131,17 @@ Individual stock batches with expiry tracking.
 
 | Field            | Type     | Description                          |
 |------------------|----------|--------------------------------------|
-| medicine         | ObjectId | Ref → Medicine (indexed)             |
+| medicine         | ObjectId | Ref â†’ Medicine (indexed)             |
 | batchNumber      | String   | Batch identifier (indexed)           |
 | quantity         | Number   | Current stock (min: 0)               |
 | purchasePrice    | Number   | Batch cost price                     |
 | sellingPrice     | Number   | Batch retail price                   |
 | manufacturingDate | Date    | When produced                        |
 | expiryDate       | Date     | Expiration date (indexed)            |
-| supplier         | ObjectId | Ref → Supplier                       |
+| supplier         | ObjectId | Ref â†’ Supplier                       |
 | dateReceived     | Date     | When stock was received              |
 
-**Static method:** `findFefo(medicineId)` — returns batches sorted by expiry date (First Expiry, First Out), excluding zero-stock batches.
+**Static method:** `findFefo(medicineId)` â€” returns batches sorted by expiry date (First Expiry, First Out), excluding zero-stock batches.
 
 **Indexes:** `medicine`, `batchNumber`, `expiryDate`
 
@@ -153,8 +153,8 @@ Transaction records for all sales.
 |------------------|----------------|--------------------------------------|
 | transactionNumber| String         | Unique invoice number (indexed)      |
 | items            | [SaleItem]     | Embedded array of line items         |
-| customer         | ObjectId       | Ref → Customer (optional)            |
-| cashier          | ObjectId       | Ref → User (required, indexed)       |
+| customer         | ObjectId       | Ref â†’ Customer (optional)            |
+| cashier          | ObjectId       | Ref â†’ User (required, indexed)       |
 | branch           | String         | Branch name                          |
 | subtotal         | Number         | Pre-tax total                        |
 | discount         | Number         | Total discount applied               |
@@ -181,13 +181,13 @@ Refund/return requests and their approval status.
 
 | Field            | Type              | Description                        |
 |------------------|-------------------|------------------------------------|
-| sale             | ObjectId          | Ref → Sale (indexed)               |
+| sale             | ObjectId          | Ref â†’ Sale (indexed)               |
 | transactionNumber| String            | Unique return ID                   |
 | items            | [SaleReturnItem]  | Items being returned               |
 | refundAmount     | Number            | Total refund value                 |
 | status           | String            | pending / approved / rejected / completed |
-| requestedBy      | ObjectId          | Ref → User who requested           |
-| approvedBy       | ObjectId          | Ref → User who approved            |
+| requestedBy      | ObjectId          | Ref â†’ User who requested           |
+| approvedBy       | ObjectId          | Ref â†’ User who approved            |
 | rejectionReason  | String            | Why rejected                       |
 | processedAt      | Date              | When approved/rejected             |
 
@@ -214,12 +214,12 @@ Audit trail for all stock changes.
 
 | Field          | Type     | Description                          |
 |----------------|----------|--------------------------------------|
-| medicine       | ObjectId | Ref → Medicine (indexed)             |
-| batch          | ObjectId | Ref → MedicineBatch                  |
+| medicine       | ObjectId | Ref â†’ Medicine (indexed)             |
+| batch          | ObjectId | Ref â†’ MedicineBatch                  |
 | type           | String   | receive / sale / adjustment / transfer / damaged / expired / return |
 | quantityChange | Number   | Positive for inbound, negative for outbound |
 | reason         | String   | Explanation for the movement         |
-| performedBy    | ObjectId | Ref → User (required)                |
+| performedBy    | ObjectId | Ref â†’ User (required)                |
 
 **Indexes:** `medicine`
 
@@ -233,8 +233,8 @@ Operating expense records.
 | description    | String   | Expense description (required)       |
 | amount         | Number   | Expense amount (required)            |
 | paymentMethod  | String   | cash / mobile_money / card / bank_transfer / other |
-| recordedBy     | ObjectId | Ref → User (required)                |
-| approvedBy     | ObjectId | Ref → User (who approved)            |
+| recordedBy     | ObjectId | Ref â†’ User (required)                |
+| approvedBy     | ObjectId | Ref â†’ User (who approved)            |
 | status         | String   | pending / approved / rejected        |
 | rejectionReason| String   | Why rejected                         |
 | receiptUrl     | String   | Path to uploaded receipt             |
@@ -248,7 +248,7 @@ Cash register session tracking.
 
 | Field           | Type            | Description                       |
 |-----------------|-----------------|-----------------------------------|
-| user            | ObjectId        | Ref → User (indexed)              |
+| user            | ObjectId        | Ref â†’ User (indexed)              |
 | date            | Date            | Session date                      |
 | openingCash     | Number          | Starting cash amount (min: 0)     |
 | status          | String          | open / closed                     |
@@ -265,8 +265,8 @@ End-of-day reports submitted by cashiers.
 
 | Field              | Type     | Description                          |
 |--------------------|----------|--------------------------------------|
-| session            | ObjectId | Ref → DailySession (indexed)         |
-| user               | ObjectId | Ref → User (required)                |
+| session            | ObjectId | Ref â†’ DailySession (indexed)         |
+| user               | ObjectId | Ref â†’ User (required)                |
 | date               | Date     | Report date                          |
 | totalSales, cashSales, mobileMoneySales, cardSales, bankTransferSales | Number | Sales breakdown |
 | refunds, cashRefunds | Number | Refund totals                      |
@@ -277,7 +277,7 @@ End-of-day reports submitted by cashiers.
 | variance           | Number   | expectedCash - actualCash            |
 | notes              | String   | Optional notes                       |
 | status             | String   | draft / submitted / approved / rejected |
-| reviewedBy         | ObjectId | Ref → User who reviewed              |
+| reviewedBy         | ObjectId | Ref â†’ User who reviewed              |
 | reviewNotes        | String   | Reviewer comments                    |
 | reviewedAt         | Date     | When reviewed                        |
 
@@ -293,7 +293,7 @@ In-app notification system.
 | message     | String   | Notification body (required)         |
 | priority    | String   | info / warning / critical            |
 | category    | String   | low_stock / expiring_medicine / sale / refund / daily_report / security / system |
-| user        | ObjectId | Ref → User (specific recipient)      |
+| user        | ObjectId | Ref â†’ User (specific recipient)      |
 | isRead      | Boolean  | Read status (default: false)         |
 | targetRoles | [String] | Roles to notify (default: ["owner"]) |
 | referenceId | String   | Related entity ID                    |
@@ -306,9 +306,9 @@ Immutable audit trail for all system actions.
 
 | Field       | Type     | Description                          |
 |-------------|----------|--------------------------------------|
-| user        | ObjectId | Ref → User (indexed)                 |
+| user        | ObjectId | Ref â†’ User (indexed)                 |
 | userName    | String   | Denormalized user name               |
-| pharmacy    | ObjectId | Ref → Pharmacy                       |
+| pharmacy    | ObjectId | Ref â†’ Pharmacy                       |
 | branch      | String   | Branch name                          |
 | action      | String   | Action identifier (indexed) e.g. SALE_CREATED, USER_LOGIN |
 | module      | String   | Module name (indexed) e.g. sales, auth, inventory |
@@ -325,26 +325,26 @@ Immutable audit trail for all system actions.
 ## Relationships
 
 ```
-Pharmacy ──1:N──► Branch
-Pharmacy ──1:N──► User (via branch assignment)
+Pharmacy â”€â”€1:Nâ”€â”€â–º Branch
+Pharmacy â”€â”€1:Nâ”€â”€â–º User (via branch assignment)
 
-Category ──1:N──► Medicine
-Supplier ──1:N──► Medicine
-Medicine ──1:N──► MedicineBatch
+Category â”€â”€1:Nâ”€â”€â–º Medicine
+Supplier â”€â”€1:Nâ”€â”€â–º Medicine
+Medicine â”€â”€1:Nâ”€â”€â–º MedicineBatch
 
-MedicineBatch ──used in──► Sale.items
-Medicine ──used in──► Sale.items
+MedicineBatch â”€â”€used inâ”€â”€â–º Sale.items
+Medicine â”€â”€used inâ”€â”€â–º Sale.items
 
-Sale ──1:N──► SaleReturn
-Sale ──N:1──► Customer
-Sale ──N:1──► User (cashier)
+Sale â”€â”€1:Nâ”€â”€â–º SaleReturn
+Sale â”€â”€N:1â”€â”€â–º Customer
+Sale â”€â”€N:1â”€â”€â–º User (cashier)
 
-User ──1:N──► DailySession
-User ──1:N──► DailyReport
-User ──1:N──► Expense (recordedBy / approvedBy)
-User ──1:N──► AuditLog
+User â”€â”€1:Nâ”€â”€â–º DailySession
+User â”€â”€1:Nâ”€â”€â–º DailyReport
+User â”€â”€1:Nâ”€â”€â–º Expense (recordedBy / approvedBy)
+User â”€â”€1:Nâ”€â”€â–º AuditLog
 
-DailySession ──1:1──► DailyReport
+DailySession â”€â”€1:1â”€â”€â–º DailyReport
 ```
 
 ## Seed Data Summary

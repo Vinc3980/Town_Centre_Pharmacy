@@ -8,7 +8,7 @@ This manual covers administrative tasks for system owners and branch managers. A
 
 ### Viewing Users
 
-1. Navigate to **Settings** → **User Management** (or **Users** in sidebar)
+1. Navigate to **Settings** â†’ **User Management** (or **Users** in sidebar)
 2. Browse the list of all system users
 3. Use search to find users by name or email
 4. View each user's role, status, and last login
@@ -17,12 +17,12 @@ This manual covers administrative tasks for system owners and branch managers. A
 
 1. Click **Add User**
 2. Fill in the form:
-   - **Name** — Full name
-   - **Email** — Login email (must be unique)
-   - **Phone** — Contact number (optional)
-   - **Password** — Initial password (must meet minimum length requirement)
-   - **Role** — Select from the dropdown
-   - **Branch** — Assign to a branch (default: Main Branch)
+   - **Name** â€” Full name
+   - **Email** â€” Login email (must be unique)
+   - **Phone** â€” Contact number (optional)
+   - **Password** â€” Initial password (must meet minimum length requirement)
+   - **Role** â€” Select from the dropdown
+   - **Branch** â€” Assign to a branch (default: Main Branch)
 3. Click **Save**
 
 The new user can log in immediately with the provided credentials.
@@ -41,7 +41,7 @@ The new user can log in immediately with the provided credentials.
 ### Role Assignment Guidelines
 
 - Assign the **least privileged role** needed for the user's job function
-- Use **owner** sparingly — typically only the pharmacy owner/proprietor
+- Use **owner** sparingly â€” typically only the pharmacy owner/proprietor
 - **Branch manager** for shift supervisors and floor managers
 - **Pharmacist** for licensed pharmacists who handle prescriptions
 - **Cashier** for front-desk sales staff
@@ -68,7 +68,7 @@ A deactivated user:
 ### Password Policies
 
 - Minimum password length is configurable (default: 6 characters)
-- Passwords are stored as bcrypt hashes — never in plain text
+- Passwords are stored as bcrypt hashes â€” never in plain text
 - Consider enforcing periodic password changes via policy
 
 ---
@@ -77,15 +77,15 @@ A deactivated user:
 
 ### General Information
 
-1. Go to **Settings** → **Pharmacy**
+1. Go to **Settings** â†’ **Pharmacy**
 2. Update the pharmacy details:
-   - **Name** — Official pharmacy name
-   - **Registration Number** — Regulatory registration ID
-   - **Phone / Email** — Contact details
-   - **Address / City / Region / Country** — Location
-   - **Logo** — Upload for receipt branding
-   - **Currency** — Display currency (default: GHS)
-   - **Timezone** — For date/time display (default: Africa/Accra)
+   - **Name** â€” Official pharmacy name
+   - **Registration Number** â€” Regulatory registration ID
+   - **Phone / Email** â€” Contact details
+   - **Address / City / Region / Country** â€” Location
+   - **Logo** â€” Upload for receipt branding
+   - **Currency** â€” Display currency (default: GHS)
+   - **Timezone** â€” For date/time display (default: Africa/Accra)
 3. Save changes
 
 This information appears on receipts and reports.
@@ -96,25 +96,25 @@ This information appears on receipts and reports.
 
 ### Configuring Password Policy
 
-1. Go to **Settings** → **Security**
+1. Go to **Settings** â†’ **Security**
 2. Set **Minimum Password Length** (minimum: 4, recommended: 8+)
 3. Save
 
 ### Configuring Session Management
 
-1. Set **Session Expiration Minutes** — How long before idle users are logged out (default: 60 minutes)
-2. Set **Max Login Attempts** — Failed attempts before lockout (default: 5)
-3. Set **Lockout Duration Minutes** — How long the account stays locked (default: 15)
+1. Set **Session Expiration Minutes** â€” How long before idle users are logged out (default: 60 minutes)
+2. Set **Max Login Attempts** â€” Failed attempts before lockout (default: 5)
+3. Set **Lockout Duration Minutes** â€” How long the account stays locked (default: 15)
 4. Save
 
 ### Configuring Refund Approval
 
-- **Require Manager Approval for Refund** — When enabled, all refunds enter a pending state and must be approved by a manager or owner before processing
+- **Require Manager Approval for Refund** â€” When enabled, all refunds enter a pending state and must be approved by a manager or owner before processing
 - Toggle this based on your trust level and staffing
 
 ### Configuring Stock Adjustment Approval
 
-- **Require Manager Approval for Stock Adjustment** — When enabled, manual stock adjustments need manager sign-off
+- **Require Manager Approval for Stock Adjustment** â€” When enabled, manual stock adjustments need manager sign-off
 - Recommended for pharmacies with inventory shrinkage concerns
 
 ---
@@ -151,8 +151,8 @@ Set how many days before expiry to start warning:
 
 ### Tax Configuration
 
-1. **Tax Enabled** — Toggle tax calculation on/off
-2. **Tax Rate** — Percentage applied to sales (e.g., 15 for 15%)
+1. **Tax Enabled** â€” Toggle tax calculation on/off
+2. **Tax Rate** â€” Percentage applied to sales (e.g., 15 for 15%)
 3. Save
 
 When enabled, tax is calculated on each sale and included in totals and reports.
@@ -165,7 +165,7 @@ When enabled, tax is calculated on each sale and included in totals and reports.
 ### Receipt Footer
 
 Customize the text printed at the bottom of receipts:
-- Default: "Thank you for choosing Adom Pharmacy"
+- Default: "Thank you for choosing Town Centre Pharmacy"
 - Common additions: Return policy, contact info, license number
 
 ---

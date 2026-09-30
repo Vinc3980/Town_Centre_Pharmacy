@@ -1,4 +1,4 @@
-# Adom Pharmacy Management System
+# Town Centre Pharmacy Management System
 
 Production-grade pharmacy management platform supporting multi-branch operations, FEFO inventory, point-of-sale, prescriptions, daily cash sessions, and real-time analytics. Built for extensibility to mobile and customer-facing applications.
 
@@ -22,7 +22,7 @@ Production-grade pharmacy management platform supporting multi-branch operations
 - **Daily Cash Sessions** - Opening float, session close with cash variance calculation, end-of-day report submission and approval workflow
 - **Refund Workflow** - Manager approval required, partial/full refunds, resaleable vs. damaged item tracking
 - **Expense Tracking** - Category-based expenses with receipt upload, approval workflow
-- **Reports & Analytics** - Sales, inventory, expenses, profit, staff performance, stock movements, expiry, low-stock, daily summaries, purchases — exportable to CSV, Excel, PDF
+- **Reports & Analytics** - Sales, inventory, expenses, profit, staff performance, stock movements, expiry, low-stock, daily summaries, purchases â€” exportable to CSV, Excel, PDF
 - **Dashboard** - Revenue trends, payment breakdowns, top medicines, sales by staff/category, inventory alerts, real-time activity feed
 - **Real-Time Updates** - Socket.IO for live sale notifications, inventory changes, staff login/logout
 - **Audit Trail** - Every significant action logged with before/after snapshots
@@ -41,7 +41,7 @@ Production-grade pharmacy management platform supporting multi-branch operations
 
 ```bash
 git clone <repo-url>
-cd adom-pharmacy
+cd town-centre-pharmacy
 
 # Install all dependencies
 npm install
@@ -93,58 +93,58 @@ cd frontend && npm run dev   # UI at http://localhost:5173
 
 | Role | Email | Password | Permissions |
 |------|-------|----------|-------------|
-| Admin | admin@adompharmacy.gh | Admin123! | Full access (all permissions) |
-| Branch Manager | manager@adompharmacy.gh | Manager123! | Full access |
-| Staff | staff@adompharmacy.gh | Staff123! | Dashboard, sales, reports |
+| Admin | admin@towncentrepharmacy.gh | Admin123! | Full access (all permissions) |
+| Branch Manager | manager@towncentrepharmacy.gh | Manager123! | Full access |
+| Staff | staff@towncentrepharmacy.gh | Staff123! | Dashboard, sales, reports |
 
 ## Project Structure
 
 ```
-adom-pharmacy/
-├── backend/                  Express + TypeScript API
-│   ├── src/
-│   │   ├── config/           Environment, database connection
-│   │   ├── controllers/      Route handlers (15 controllers)
-│   │   ├── middleware/        Auth, error handling, file uploads
-│   │   ├── routes/           Versioned routers (/api/v1/*)
-│   │   ├── services/         Business logic (audit, notifications, tokens)
-│   │   ├── validators/       Zod schemas
-│   │   ├── utils/            Logger, response formatting, money utils
-│   │   ├── types/            Shared TypeScript types
-│   │   ├── constants/        App constants, roles, permissions
-│   │   └── sockets/          Socket.IO event handlers
-│   ├── prisma/               Schema + migrations (PostgreSQL)
-│   ├── Dockerfile
-│   └── package.json
-├── frontend/                 React + Vite SPA
-│   ├── src/
-│   │   ├── app/              Router & app shell
-│   │   ├── components/       Reusable UI components
-│   │   ├── layouts/          Page layouts
-│   │   ├── pages/            Route pages
-│   │   ├── features/         Feature modules (POS, inventory, reports...)
-│   │   ├── hooks/            Custom React hooks
-│   │   ├── services/         Business logic
-│   │   ├── api/              Axios API clients
-│   │   ├── context/          React context providers
-│   │   ├── types/            TypeScript types
-│   │   ├── schemas/          Zod validation schemas
-│   │   └── utils/            Helpers
-│   ├── Dockerfile
-│   └── package.json
-├── docs/                     Documentation
-│   ├── openapi.yaml          OpenAPI 3.0 specification
-│   ├── api.md                API reference
-│   ├── architecture.md       System architecture
-│   ├── database.md           Database schema
-│   ├── deployment.md         Deployment guide
-│   ├── development.md        Development guide
-│   ├── security.md           Security documentation
-│   ├── admin-manual.md       Admin user manual
-│   └── user-manual.md        End-user manual
-├── e2e/                      Playwright E2E tests
-├── docker-compose.yml        Backend + frontend Docker setup
-└── package.json              Root scripts (dev, build, test)
+town-centre-pharmacy/
+â”œâ”€â”€ backend/                  Express + TypeScript API
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ config/           Environment, database connection
+â”‚   â”‚   â”œâ”€â”€ controllers/      Route handlers (15 controllers)
+â”‚   â”‚   â”œâ”€â”€ middleware/        Auth, error handling, file uploads
+â”‚   â”‚   â”œâ”€â”€ routes/           Versioned routers (/api/v1/*)
+â”‚   â”‚   â”œâ”€â”€ services/         Business logic (audit, notifications, tokens)
+â”‚   â”‚   â”œâ”€â”€ validators/       Zod schemas
+â”‚   â”‚   â”œâ”€â”€ utils/            Logger, response formatting, money utils
+â”‚   â”‚   â”œâ”€â”€ types/            Shared TypeScript types
+â”‚   â”‚   â”œâ”€â”€ constants/        App constants, roles, permissions
+â”‚   â”‚   â””â”€â”€ sockets/          Socket.IO event handlers
+â”‚   â”œâ”€â”€ prisma/               Schema + migrations (PostgreSQL)
+â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â””â”€â”€ package.json
+â”œâ”€â”€ frontend/                 React + Vite SPA
+â”‚   â”œâ”€â”€ src/
+â”‚   â”‚   â”œâ”€â”€ app/              Router & app shell
+â”‚   â”‚   â”œâ”€â”€ components/       Reusable UI components
+â”‚   â”‚   â”œâ”€â”€ layouts/          Page layouts
+â”‚   â”‚   â”œâ”€â”€ pages/            Route pages
+â”‚   â”‚   â”œâ”€â”€ features/         Feature modules (POS, inventory, reports...)
+â”‚   â”‚   â”œâ”€â”€ hooks/            Custom React hooks
+â”‚   â”‚   â”œâ”€â”€ services/         Business logic
+â”‚   â”‚   â”œâ”€â”€ api/              Axios API clients
+â”‚   â”‚   â”œâ”€â”€ context/          React context providers
+â”‚   â”‚   â”œâ”€â”€ types/            TypeScript types
+â”‚   â”‚   â”œâ”€â”€ schemas/          Zod validation schemas
+â”‚   â”‚   â””â”€â”€ utils/            Helpers
+â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â””â”€â”€ package.json
+â”œâ”€â”€ docs/                     Documentation
+â”‚   â”œâ”€â”€ openapi.yaml          OpenAPI 3.0 specification
+â”‚   â”œâ”€â”€ api.md                API reference
+â”‚   â”œâ”€â”€ architecture.md       System architecture
+â”‚   â”œâ”€â”€ database.md           Database schema
+â”‚   â”œâ”€â”€ deployment.md         Deployment guide
+â”‚   â”œâ”€â”€ development.md        Development guide
+â”‚   â”œâ”€â”€ security.md           Security documentation
+â”‚   â”œâ”€â”€ admin-manual.md       Admin user manual
+â”‚   â””â”€â”€ user-manual.md        End-user manual
+â”œâ”€â”€ e2e/                      Playwright E2E tests
+â”œâ”€â”€ docker-compose.yml        Backend + frontend Docker setup
+â””â”€â”€ package.json              Root scripts (dev, build, test)
 ```
 
 ## Docker Setup
@@ -173,13 +173,13 @@ This starts two containers (the database runs as a native PostgreSQL service):
 ```bash
 # Backend only
 cd backend
-docker build -t adom-pharmacy-backend .
-docker run -p 5000:5000 --env-file .env adom-pharmacy-backend
+docker build -t town-centre-pharmacy-backend .
+docker run -p 5000:5000 --env-file .env town-centre-pharmacy-backend
 
 # Frontend only
 cd frontend
-docker build -t adom-pharmacy-frontend .
-docker run -p 80:80 adom-pharmacy-frontend
+docker build -t town-centre-pharmacy-frontend .
+docker run -p 80:80 town-centre-pharmacy-frontend
 ```
 
 ## Development Commands
@@ -253,4 +253,4 @@ Key endpoints:
 
 ## License
 
-Private — Adom Pharmacy
+Private â€” Town Centre Pharmacy

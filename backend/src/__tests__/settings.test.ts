@@ -32,7 +32,7 @@ describe("Settings API", () => {
       expect(res.body).toHaveProperty("inventory");
       expect(res.body).toHaveProperty("sales");
       expect(res.body).toHaveProperty("security");
-      expect(res.body.pharmacy.name).toBe("Adom Pharmacy");
+      expect(res.body.pharmacy.name).toBe("Town Centre Pharmacy");
     });
 
     it("rejects cashier without manage_settings", async () => {
@@ -49,7 +49,7 @@ describe("Settings API", () => {
         .get("/api/v1/settings/pharmacy")
         .set("Authorization", `Bearer ${ownerToken}`);
       expect(res.status).toBe(200);
-      expect(res.body.name).toBe("Adom Pharmacy");
+      expect(res.body.name).toBe("Town Centre Pharmacy");
       expect(res.body.registrationNumber).toBe("PH-001");
     });
 
@@ -57,9 +57,9 @@ describe("Settings API", () => {
       const res = await request(app)
         .put("/api/v1/settings/pharmacy")
         .set("Authorization", `Bearer ${ownerToken}`)
-        .send({ name: "Adom Pharmacy Updated", phone: "+233 30 200 5678" });
+        .send({ name: "Town Centre Pharmacy Updated", phone: "+233 30 200 5678" });
       expect(res.status).toBe(200);
-      expect(res.body.name).toBe("Adom Pharmacy Updated");
+      expect(res.body.name).toBe("Town Centre Pharmacy Updated");
       expect(res.body.phone).toBe("+233 30 200 5678");
 
       const audit = await prisma.auditLog.findFirst({ where: { action: "SETTINGS_UPDATED", entity: "Pharmacy" } });
@@ -73,7 +73,7 @@ describe("Settings API", () => {
         .put("/api/v1/settings/pharmacy")
         .set("Authorization", `Bearer ${ownerToken}`)
         .send({
-          name: "Adom Pharmacy",
+          name: "Town Centre Pharmacy",
           registrationNumber: "PH-001",
           phone: "",
           email: "",
@@ -92,7 +92,7 @@ describe("Settings API", () => {
       expect(res.body.email).toBe("");
       expect(res.body.address).toBe("");
       expect(res.body.logoUrl).toBeNull();
-      expect(res.body.name).toBe("Adom Pharmacy");
+      expect(res.body.name).toBe("Town Centre Pharmacy");
     });
 
     it("PUT clears an optional text field back to empty", async () => {

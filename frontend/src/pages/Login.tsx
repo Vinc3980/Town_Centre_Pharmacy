@@ -53,7 +53,7 @@ export default function Login() {
             <Pill size={17} className="text-white" />
           </div>
           <div>
-            <div className="font-bold text-lg text-navy leading-tight">Adom</div>
+            <div className="font-bold text-lg text-navy leading-tight">Town Centre</div>
             <div className="text-blue-600 text-[10px] uppercase tracking-widest font-medium">Pharmacy</div>
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function Login() {
             label="Email"
             type="text"
             autoComplete="username"
-            placeholder="e.g. admin@adompharmacy.gh or ST-0001"
+            placeholder="e.g. admin@towncentrepharmacy.gh or ST-0001"
             icon={<Mail size={16} />}
             error={errors.email?.message}
             {...register("email")}
@@ -122,7 +122,7 @@ export default function Login() {
         </form>
 
         <p className="text-[10px] text-gray-soft/80 text-center mt-8">
-          Copyright © 2025 · AdomPharmacy · Background photo © Harrison Keely (CC BY 4.0)
+          Copyright © 2025 · Town Centre Pharmacy · Background photo © Harrison Keely (CC BY 4.0)
         </p>
       </div>
     </div>

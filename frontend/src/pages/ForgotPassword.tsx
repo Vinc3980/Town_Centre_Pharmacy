@@ -43,7 +43,7 @@ export default function ForgotPassword() {
             <Pill size={17} className="text-white" />
           </div>
           <div>
-            <div className="font-bold text-lg text-navy leading-tight">Adom</div>
+            <div className="font-bold text-lg text-navy leading-tight">Town Centre</div>
             <div className="text-blue-600 text-[10px] uppercase tracking-widest font-medium">Pharmacy</div>
           </div>
         </div>
@@ -76,7 +76,7 @@ export default function ForgotPassword() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. john@adompharmacy.gh"
+                placeholder="e.g. john@towncentrepharmacy.gh"
                 icon={<Mail size={16} />}
                 required
               />
@@ -92,7 +92,7 @@ export default function ForgotPassword() {
         )}
 
         <p className="text-[10px] text-gray-soft/80 text-center mt-8">
-          Copyright © 2025 · AdomPharmacy · Background photo © Harrison Keely (CC BY 4.0)
+          Copyright © 2025 · Town Centre Pharmacy · Background photo © Harrison Keely (CC BY 4.0)
         </p>
       </div>
 

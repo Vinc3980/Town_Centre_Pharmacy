@@ -14,7 +14,7 @@ async function main() {
   const server = http.createServer(app);
   initSockets(server);
   server.listen(env.port, () => {
-    logger.info(`Adom Pharmacy API running on port ${env.port} [${env.nodeEnv}]`);
+    logger.info(`Town Centre Pharmacy API running on port ${env.port} [${env.nodeEnv}]`);
   });
 }
 
